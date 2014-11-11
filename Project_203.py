@@ -70,6 +70,7 @@ class Mission:
          self.game_type = 'unk'
          self.mission_des = ''
          self.mission_name = 'no_name'
+         self.author = 'unknown_author'
          
      def examine_sqm(self):
          
@@ -150,7 +151,10 @@ class Mission:
                 elif "gametype =" in line.lower():
                     for game in game_types:
                         if game in line.lower():
-                            self.game_type = game         
+                            self.game_type = game
+                elif "author =" in line.lower():
+                    self.author = ' '.join(line.split(' ')[2:])
+                    self.author = self.author.translate(None, '"";.[]')         
                 outfile.write(line)              
          infile.close()
          outfile.close()       
@@ -258,6 +262,7 @@ class Mission:
          print 'Game type: ', self.game_type 
          print 'Addons: ', str(self.addons_on)
          print 'Island: ', self.island
+         print 'Author: ', self.author
                                 
 fullpath = "F:\Games\Arma 2\Osku's tool\input"
 
@@ -329,7 +334,7 @@ def main():
         folder_name = folder_name.translate(None, '!@#$:;*,"=-')
         mis1.modify_folders(mis, fullpath + '\\' + folder_name)
         
-        writer.writerow((mis1.player_count, folder_name, mis1.mission_des, 'author', '', '', '', mis1.island))
+        writer.writerow((mis1.player_count, folder_name, mis1.mission_des, mis1.author, '', '', '', mis1.island))
     list_file.close()
     
 main()
