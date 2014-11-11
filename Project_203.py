@@ -49,7 +49,8 @@ class Mission:
          self.directory = path
          self.sqm_file = {}
          self.ext_file = {}
-         self.sqf_file = {}
+         self.btc_file = {}
+         self.far_file = {}
          for dirpath, subdirs, files in os.walk(path):
             for f in files:
                 if f.endswith(".sqm"):
@@ -57,9 +58,11 @@ class Mission:
                 elif f.endswith(".ext"):
                     self.ext_file[os.path.join(dirpath, f)] = os.path.basename(f)
                 elif f == '=BTC=_revive_init.sqf':
-                    self.sqf_file[os.path.join(dirpath, f)] = os.path.basename(f)
+                    self.btc_file[os.path.join(dirpath, f)] = os.path.basename(f)
+                elif f == 'FAR_revive_init.sqf':
+                    self.far_file[os.path.join(dirpath, f)] = os.path.basename(f)
                 
-         print self.sqm_file, self.ext_file, self.sqf_file
+         print self.sqm_file, self.ext_file, self.btc_file
          
          self.player_count = 0
          self.island  = 'unknown_island'
@@ -126,6 +129,7 @@ class Mission:
                     if load_name != None:
                         self.mission_name = load_name.group()[3:]
                         self.mission_name = self.mission_name.replace(' ','_')
+                        self.mission_name = self.mission_name.translate(None, '";,*=-()&#<>|')
                         self.mission_name = self.mission_name.lower()
                     else:
                         self.mission_name = 'no_name'    
@@ -160,21 +164,47 @@ class Mission:
          btc_1 = 'BTC_disable_respawn = 1;'  
          
          new_btc = 'new_btc.sqm'
-         infile = open(self.sqf_file.keys()[0], 'r')
+         infile = open(self.btc_file.keys()[0], 'r')
          outfile = open(new_btc, 'w')
          
          for line in infile:
                 if btc_0 in line:
                     print 'found BTC'
                     line = line.replace(line, '%s\n' % (btc_1))
+                    print 'ovo', line
                     has_respawn_btc = True
-                    print 'btc: ' + str(has_respawn_btc)
+                    print 'BTC: ' + str(has_respawn_btc)
                 outfile.write(line)            
          infile.close()
          outfile.close()
          return new_btc
          
-     def folder_name(self): 
+     def examine_far(self):
+         
+         has_revive_far = False
+         far_1 = 'FAR_ReviveMode = 0'
+         far_2 = 'FAR_ReviveMode = 1;'
+         far_3 = 'FAR_ReviveMode = 2;'  
+         
+         new_far = 'new_far.sqm'
+         infile = open(self.far_file.keys()[0], 'r')
+         outfile = open(new_far, 'w')
+         
+         for line in infile:
+                if far_1 in line or far_2 in line:
+                    line = line.replace(line, '%s\n' % (far_3))
+                    print 'ovo', line
+                    has_revive_far = True
+                    print 'FAR: ' + str(has_revive_far)
+                outfile.write(line)            
+         infile.close()
+         outfile.close()
+         return new_far
+         
+     def folder_name(self, original_folder_name):
+         
+         islands = ['fallujah', 'chernarus', 'utes', 'zagrabad', 'takistan', 'bystrica'] 
+            
          game_type = self.game_type[:2]
          
          if self.addons_on:
@@ -185,7 +215,21 @@ class Mission:
              player_count = '0' + str(self.player_count)
          else:
              player_count = str(self.player_count)
-                         
+             
+         # temporary solution: when game type is not recognized - it is set to coop
+         if game_type == 'un':
+             game_type = 'co'
+          
+         # if island is not found in mission files, try looking in filename
+         if self.island == 'unknown_island':
+             for island in islands:
+                 if island in original_folder_name.lower():
+                     self.island = island
+                     if self.addons_on == False:
+                         self.addons_on = True
+                         addons = '@'
+            
+         # make new folder name using data found in files                
          folder_name = game_type, str(addons), player_count, '_', self.mission_name, '.', self.island, '.pbo'
          folder_name = ''.join(folder_name)
          return folder_name
@@ -223,13 +267,14 @@ def find_folders(fullpath):
     return directories
 
 def main():    
-    list_file = open('new_missions_list.csv', 'w')
+    list_file = open('new_missions_list.csv', 'wb')
     writer = csv.writer(list_file)
     
     start = find_folders(fullpath)
     
     for mis in start:
         mis1 = Mission(mis)
+        original_folder_name = os.path.basename(os.path.normpath(mis))
 
         try:
             sqm = mis1.examine_sqm()
@@ -246,12 +291,19 @@ def main():
             ext = None
             
         try:    
-            mis1.examine_btc()
+            btc = mis1.examine_btc()
         except IndexError:
-            print 'no sqf file in directory'
+            print 'no btc file in directory'
+            btc = None
+            
+        try:    
+            far = mis1.examine_far()
+        except IndexError:
+            print 'no far file in directory'
+            far = None
         
         print sqm, ext
-        folder_name = mis1.folder_name()    
+        folder_name = mis1.folder_name(original_folder_name)    
         print folder_name
     
         mis1.copy_and_replace(mis + '\\mission.sqm', sqm[1])
@@ -261,10 +313,21 @@ def main():
                 mis1.copy_and_replace(mis + '\\description.ext', ext[1])
             except WindowsError:
                 print 'no ext file in directory'
+                
+        if btc != None:
+            try:
+                mis1.copy_and_replace(mis + '\\=BTC=_revive\\=BTC=_revive_init.sqf', btc)
+            except WindowsError:
+                print 'no sqf file in directory'
+                
+        if far != None:
+            try:
+                mis1.copy_and_replace(mis + '\\FAR_revive\\FAR_revive_init.sqf', far)
+            except WindowsError:
+                print 'no far file in directory'
         
         folder_name = folder_name.translate(None, '!@#$:;*,"=-')
         mis1.modify_folders(mis, fullpath + '\\' + folder_name)
-        
         
         writer.writerow((mis1.player_count, folder_name, mis1.mission_des, 'author', '', '', '', mis1.island))
     list_file.close()
