@@ -1,9 +1,9 @@
 
-import re, os, shutil, csv
+import re, os, shutil, csv, urllib
 from Tkinter import *
 
 class Window:
-
+    # temporarilly disabled to make debugging easier
     def __init__(self):
         
         self.master = Tk()
@@ -129,8 +129,10 @@ class Mission:
                     load_name = re.search(' (.*$)', line)
                     if load_name != None:
                         self.mission_name = load_name.group()[3:]
+                        in_brackets = re.compile(r'\[[^)]*\]')
+                        self.mission_name = re.sub(in_brackets, '', self.mission_name)
                         self.mission_name = self.mission_name.replace(' ','_')
-                        self.mission_name = self.mission_name.translate(None, '";,*=-()&#<>|')
+                        self.mission_name = self.mission_name.translate(None, '";,*=-()&#/<>|')
                         self.mission_name = self.mission_name.lower()
                     else:
                         self.mission_name = 'no_name'    
@@ -175,7 +177,7 @@ class Mission:
                 if btc_0 in line:
                     print 'found BTC'
                     line = line.replace(line, '%s\n' % (btc_1))
-                    print 'ovo', line
+                    print 'BTC line replacement: ', line
                     has_respawn_btc = True
                     print 'BTC: ' + str(has_respawn_btc)
                 outfile.write(line)            
@@ -197,7 +199,7 @@ class Mission:
          for line in infile:
                 if far_1 in line or far_2 in line:
                     line = line.replace(line, '%s\n' % (far_3))
-                    print 'ovo', line
+                    print 'FAR line replacement: ', line
                     has_revive_far = True
                     print 'FAR: ' + str(has_revive_far)
                 outfile.write(line)            
@@ -207,7 +209,7 @@ class Mission:
          
      def folder_name(self, original_folder_name):
          
-         islands = ['fallujah', 'chernarus', 'utes', 'zagrabad', 'takistan', 'bystrica'] 
+         islands = ['fallujah', 'chernarus', 'utes', 'zagrabad', 'takistan', 'bystrica', 'imrali'] 
             
          game_type = self.game_type[:2]
          
@@ -232,6 +234,17 @@ class Mission:
                      if self.addons_on == False:
                          self.addons_on = True
                          addons = '@'
+                         
+         if self.mission_name == 'no_name':
+             name = urllib.unquote(original_folder_name)
+             name = name.translate(None, '";,*=-()&#/<>|').replace(' ','_').split(".")[0].lower()
+             # remove everything that is inside "[]" brackets
+             in_brackets = re.compile(r'\[(^)]*\)')
+             self.mission_name = re.sub(in_brackets, '', name)
+             in_brackets_sq = re.compile(r'\[[^)]*\]')
+             self.mission_name = re.sub(in_brackets_sq, '', name)
+             print 'name from filename is ', self.mission_name
+              
             
          # make new folder name using data found in files                
          folder_name = game_type, str(addons), player_count, '_', self.mission_name, '.', self.island, '.pbo'
@@ -250,9 +263,11 @@ class Mission:
         except NameError:
             print 'required files are not found'
         except WindowsError:
-            print 'folder with the same name already exists'
+            print 'folder with the same name already exists or bad filename'
+            print original_name, folder_name
         #finally:
-        #    os.rename(original_name, folder_name + '1')    
+        #    folder_name = folder_name + '_error'
+        #    os.rename(original_name, folder_name)    
             
      def mission_info(self):
          print '\n'
@@ -334,7 +349,7 @@ def main():
         folder_name = folder_name.translate(None, '!@#$:;*,"=-')
         mis1.modify_folders(mis, fullpath + '\\' + folder_name)
         
-        writer.writerow((mis1.player_count, folder_name, mis1.mission_des, mis1.author, '', '', '', mis1.island))
+        writer.writerow((mis1.player_count, folder_name, mis1.mission_des, mis1.author, '', '', '', mis1.island, original_folder_name))
     list_file.close()
     
 main()
