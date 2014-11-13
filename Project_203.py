@@ -90,17 +90,16 @@ class Mission:
                 elif ('addOns[]=' in line or 'addOnsAuto[]=' in line) and self.addons_on == False:
                     watch_for_addons = True
                     print 'addons: ', self.addons_on 
-                elif '};' in line or self.addons_on == True:
+                elif '};' in line:
                     watch_for_addons = False
                 elif '"a3_map_altis"' in line:
                     self.island = 'altis'
                 elif '"a3_map_stratis"' in line:
                     self.island = 'stratis'
                 elif watch_for_addons == True and self.addons_on == False:  
-                    if ('"a3_') in line or ('"A3_') in line or ('{') in line:
-                        self.addons_on = False
-                    else:
-                        self.addons_on = True                       
+                    if ('"a3_') not in line and ('"A3_') not in line:
+                        if '{' not in line: 
+                            self.addons_on = True                      
                 outfile.write(line)
          infile.close()
          outfile.close()
@@ -217,6 +216,7 @@ class Mission:
              addons = '@'
          else:
              addons = ''
+             
          if self.player_count < 10:
              player_count = '0' + str(self.player_count)
          else:
@@ -346,7 +346,7 @@ def main():
             except WindowsError:
                 print 'no far file in directory'
         
-        folder_name = folder_name.translate(None, '!@#$:;*,"=-')
+        folder_name = folder_name.translate(None, '!#$:;*,"=-')
         mis1.modify_folders(mis, fullpath + '\\' + folder_name)
         
         writer.writerow((mis1.player_count, folder_name, mis1.mission_des, mis1.author, '', '', '', mis1.island, original_folder_name))
