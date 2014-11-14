@@ -3,7 +3,7 @@ import re, os, shutil, csv, urllib
 from Tkinter import *
 
 class Window:
-    # temporarilly disabled to make debugging easier
+    # temporarilly disabled for more convenient testing
     def __init__(self):
         
         self.master = Tk()
@@ -107,23 +107,29 @@ class Mission:
          return sqm_data, new_sqm
          
      def examine_ext(self):
+         ''' Method to handle data from ext file, erase briefing name, set 
+         respawn to group, find game type, mission name, description, 
+         author's name'''
          
          game_types = ['coop','dm','tdm','ctf','sc','cti','rpg','seize','defend',
          'zdm','zctf','zcoop','zsc','zcti','ztdm','zrpg','zgm','zvz','zvp']
         
-         respawn_check = re.compile('respawn = ', re.IGNORECASE)
-         on_load_name_check = re.compile('onLoadName = ', re.IGNORECASE)
-         on_load_mission_check = re.compile('onLoadMission = ', re.IGNORECASE)
+         respawn_check = re.compile('respawn[ =]', re.IGNORECASE)
+         on_load_name_check = re.compile('onLoadName =', re.IGNORECASE)
+         on_load_mission_check = re.compile('onLoadMission =', re.IGNORECASE)
          
          new_ext = 'new_ext.ext'
          infile = open(self.ext_file.keys()[0], 'r')
          outfile = open(new_ext, 'w')
          
          for line in infile:
+                
+                # erase briefing name
                 if 'briefingname' in line.lower():
                     print 'briefing name erased in .ext!'
                     line = line.replace(line,'')
-                #find better solution for case insensitive search    
+                
+                # checking mission name     
                 elif on_load_name_check.match(line):
                     load_name = re.search(' (.*$)', line)
                     if load_name != None:
@@ -136,34 +142,51 @@ class Mission:
                     else:
                         self.mission_name = 'no_name'    
                     print 'mission name is ', self.mission_name
+                
+                # checking mission description
                 elif on_load_mission_check.match(line):
                     des = re.search(' (.*$)', line)
                     if des != None:
                         self.mission_des = des.group()[3:]
+                        self.mission_des = self.mission_des.translate(None, '";')
                     else:
                         self.mission_des = 'no description'    
-                    print 'mission description is ', self.mission_des    
-                elif respawn_check.match(line): #and has_respawn_btc == False:
-                    print 'setting respawn'
-                    if re.search(r'[0-5]', line) != None:
-                        line = 'Respawn = 4;\n'
-                    else: 
-                        line = 'Respawn = "GROUP";\n'
+                    print 'mission description is ', self.mission_des
+                
+                # checking respawn type    
+                elif respawn_check.match(line): 
+                    #print 'setting respawn'
+                    #if re.search(r'[0-5]', line) != None:
+                    line = line.replace(line,'Respawn = 4;\n')
+                    #    print line
+                    #else: 
+                    #    line = line.replace(line,'Respawn = "GROUP";')
+                    #    print line
+                    
+                # checking game type        
                 elif "gametype =" in line.lower():
+                    print 'checking game type'
                     for game in game_types:
                         if game in line.lower():
                             self.game_type = game
+                            print 'game type is: ', game
+                
+                # checking mission makers name
                 elif "author =" in line.lower():
+                    print 'checking mission author name'
                     self.author = ' '.join(line.split(' ')[2:])
-                    self.author = self.author.translate(None, '"";.[]')         
+                    self.author = self.author.translate(None, '"";.[]')
+                    print 'mission author: ', self.author         
+                
                 outfile.write(line)              
+         
          infile.close()
          outfile.close()       
          ext_data = [self.mission_name, self.mission_des, self.game_type]       
          return ext_data, new_ext
          
      def examine_btc(self):
-         
+         ''' Method to disable BTC respawn '''
          has_respawn_btc = False
          btc_0 = 'BTC_disable_respawn = 0;'
          btc_1 = 'BTC_disable_respawn = 1;'  
@@ -185,9 +208,9 @@ class Mission:
          return new_btc
          
      def examine_far(self):
-         
+         ''' Method to change FAR respawn to option 3 '''
          has_revive_far = False
-         far_1 = 'FAR_ReviveMode = 0'
+         far_1 = 'FAR_ReviveMode = 0;'
          far_2 = 'FAR_ReviveMode = 1;'
          far_3 = 'FAR_ReviveMode = 2;'  
          
@@ -207,16 +230,20 @@ class Mission:
          return new_far
          
      def folder_name(self, original_folder_name):
+         '''  Generate new folder name from the acquired data '''
          
-         islands = ['fallujah', 'chernarus', 'utes', 'zagrabad', 'takistan', 'bystrica', 'imrali'] 
+         islands = ['fallujah', 'chernarus', 'utes', 'zagrabad', 'takistan', 
+         'bystrica', 'imrali'] 
             
          game_type = self.game_type[:2]
          
+         # add @ symbol if mission uses addons
          if self.addons_on:
              addons = '@'
          else:
              addons = ''
-             
+         
+         # add zero to number if player count is less than 10
          if self.player_count < 10:
              player_count = '0' + str(self.player_count)
          else:
@@ -234,7 +261,8 @@ class Mission:
                      if self.addons_on == False:
                          self.addons_on = True
                          addons = '@'
-                         
+          
+         # if mission name is not found in ext, look for mission name in file name                               
          if self.mission_name == 'no_name':
              name = urllib.unquote(original_folder_name)
              name = name.translate(None, '";,*=-()&#/<>|').replace(' ','_').split(".")[0].lower()
@@ -257,7 +285,8 @@ class Mission:
         shutil.copy(edit, original_file)
         os.remove(edit)  
      
-     def modify_folders(self, original_name, folder_name):             
+     def modify_folders(self, original_name, folder_name):
+        ''' rename folder '''             
         try:
             os.rename(original_name, folder_name)
         except NameError:
@@ -270,6 +299,7 @@ class Mission:
         #    os.rename(original_name, folder_name)    
             
      def mission_info(self):
+         ''' print out mission info '''
          print '\n'
          print 'Mission name: ', self.mission_name 
          print 'Mission description: ', self.mission_des  
@@ -279,6 +309,7 @@ class Mission:
          print 'Island: ', self.island
          print 'Author: ', self.author
                                 
+# hardcoded fullpath for testing purposes
 fullpath = "F:\Games\Arma 2\Osku's tool\input"
 
 def find_folders(fullpath):
@@ -286,7 +317,10 @@ def find_folders(fullpath):
     directories = [fullpath + "\\" + x for x in os.listdir(fullpath)]
     return directories
 
-def main():    
+def main():
+    ''' calls function to search for missions and then process them one by one,
+    copy files, rename folders, and write data to csv file''' 
+        
     list_file = open('new_missions_list.csv', 'wb')
     writer = csv.writer(list_file)
     
@@ -299,15 +333,16 @@ def main():
         try:
             sqm = mis1.examine_sqm()
         except IndexError:
-            'no sqm file in directory'
+            print 'no sqm file in directory or not unpacked file'
+            sqm = None
         
         try:                        
             ext = mis1.examine_ext()
         except IndexError:
-            print 'no ext file in directory'        
+            print 'no ext file in directory'
+            ext = None        
         except WindowsError:
             print 'no ext file in directory'
-        finally:
             ext = None
             
         try:    
