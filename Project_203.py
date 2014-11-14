@@ -1,5 +1,6 @@
 
-import re, os, shutil, csv, urllib, sys
+import re, os, shutil, csv
+from urllib import unquote
 from subprocess import Popen
 from Tkinter import *
 
@@ -264,8 +265,8 @@ class Mission:
                          addons = '@'
           
          # if mission name is not found in ext, look for mission name in file name                               
-         if self.mission_name == 'no_name':
-             name = urllib.unquote(original_folder_name)
+         if self.mission_name == 'no_name' or self.mission_name == '':
+             name = unquote(original_folder_name)
              name = name.translate(None, '";,*=-()&#/<>|').replace(' ','_').split(".")[0].lower()
              # remove everything that is inside "[]" brackets
              in_brackets = re.compile(r'\[(^)]*\)')
@@ -276,7 +277,7 @@ class Mission:
               
             
          # make new folder name using data found in files                
-         folder_name = game_type, str(addons), player_count, '_', self.mission_name, '.', self.island, '.pbo'
+         folder_name = game_type, str(addons), player_count, '_', self.mission_name, '.', self.island # not needed, Osku's Tool adds .pbo  , '.pbo'
          folder_name = ''.join(folder_name)
          return folder_name
          
@@ -294,7 +295,7 @@ class Mission:
             print 'warning: required files are not found'
         except WindowsError:
             print 'warning: folder with the same name already exists or bad filename'
-            folder_name = folder_name[:-4] + '.DUPLICATE.pbo'
+            folder_name = folder_name[:-4] + '.DUPLICATE'
             os.rename(original_name, folder_name)    
             
      def mission_info(self):
