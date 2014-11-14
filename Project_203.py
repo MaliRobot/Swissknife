@@ -1,5 +1,6 @@
 
-import re, os, shutil, csv, urllib
+import re, os, shutil, csv, urllib, sys
+from subprocess import Popen
 from Tkinter import *
 
 class Window:
@@ -290,13 +291,11 @@ class Mission:
         try:
             os.rename(original_name, folder_name)
         except NameError:
-            print 'required files are not found'
+            print 'warning: required files are not found'
         except WindowsError:
-            print 'folder with the same name already exists or bad filename'
-            print original_name, folder_name
-        #finally:
-        #    folder_name = folder_name + '_error'
-        #    os.rename(original_name, folder_name)    
+            print 'warning: folder with the same name already exists or bad filename'
+            folder_name = folder_name[:-4] + '.DUPLICATE.pbo'
+            os.rename(original_name, folder_name)    
             
      def mission_info(self):
          ''' print out mission info '''
@@ -317,10 +316,25 @@ def find_folders(fullpath):
     directories = [fullpath + "\\" + x for x in os.listdir(fullpath)]
     return directories
 
+def unpack(fullpath):
+    oskus_input = os.path.dirname(fullpath)
+    p = Popen("cmd.exe /c extract.bat", cwd=r"%s" % (oskus_input))
+    stdout, stderr = p.communicate()
+    
+def repack(fullpath):
+    oskus_repack = os.path.dirname(fullpath)
+    p = Popen("cmd.exe /c repack.bat", cwd=r"%s" % (oskus_repack))
+    stdout, stderr = p.communicate()
+
 def main():
     ''' calls function to search for missions and then process them one by one,
     copy files, rename folders, and write data to csv file''' 
-        
+    
+    #try:
+    unpack(fullpath)
+    #except:
+    #    print 'Nothing to unpack or error occured'
+                
     list_file = open('new_missions_list.csv', 'wb')
     writer = csv.writer(list_file)
     
@@ -386,5 +400,10 @@ def main():
         
         writer.writerow((mis1.player_count, folder_name, mis1.mission_des, mis1.author, '', '', '', mis1.island, original_folder_name))
     list_file.close()
+    
+    #try:
+    repack(fullpath)
+    #except:
+    #    print 'Error occured'
     
 main()
