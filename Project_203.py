@@ -7,7 +7,7 @@ from Tkinter import *
 class Window:
     """ Interface from where you can pass location of Osku's Tool to the
     program (fullpath) if Swissknife is not in the same folder. """
-    # temporarilly disabled for more convenient testing
+    # temporarily disabled for more convenient testing
     def __init__(self):
         
         self.master = Tk()
