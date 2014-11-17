@@ -5,6 +5,8 @@ from subprocess import Popen
 from Tkinter import *
 
 class Window:
+    """ Interface from where you can pass location of Osku's Tool to the
+    program (fullpath) if Swissknife is not in the same folder. """
     # temporarilly disabled for more convenient testing
     def __init__(self):
         
@@ -47,7 +49,8 @@ class Window:
         self.master.destroy()  
 
 class Mission:
-     def __init__(self, path):
+    """ Class to store and process mission data and mission files. """
+    def __init__(self, path):
          self.directory = path
          self.sqm_file = {}
          self.ext_file = {}
@@ -75,7 +78,10 @@ class Mission:
          self.mission_name = 'no_name'
          self.author = 'unknown_author'
          
-     def examine_sqm(self):
+    def examine_sqm(self):
+         """ Search through sqm file to look for number of players, find out if 
+         mission uses addons, erase briefing info parameter and get mission 
+         description if it's there """
          
          if self.sqm_file == {}:
              return None
@@ -126,10 +132,10 @@ class Mission:
          sqm_data = [self.player_count, self.island, self.addons_on]              
          return [sqm_data, new_sqm]
          
-     def examine_ext(self):
-         ''' Method to handle data from ext file, erase briefing name, set 
+    def examine_ext(self):
+         """ Method to handle data from ext file, erase briefing name, set 
          respawn to group, find game type, mission name, description, 
-         author's name'''
+         author's name. """
          
          if self.ext_file == {}:
              return None
@@ -199,8 +205,8 @@ class Mission:
          ext_data = [self.mission_name, self.mission_des, self.game_type]       
          return [ext_data, new_ext]
          
-     def examine_btc(self):
-         ''' Method to disable BTC respawn '''
+    def examine_btc(self):
+         """ Method to disable BTC respawn. """
          
          if self.btc_file == {}:
              return None
@@ -227,8 +233,8 @@ class Mission:
          outfile.close()
          return [source, new_btc]
          
-     def examine_far(self):
-         ''' Method to change FAR respawn to option 3 '''
+    def examine_far(self):
+         """ Method to change FAR respawn to option 3. """
          
          if self.far_file == {}:
              return None
@@ -252,16 +258,16 @@ class Mission:
          outfile.close()
          return new_far
          
-     def mission_description(self, des):
-         '''  method to extract mission description'''
+    def mission_description(self, des):
+         """ method to extract mission description """
          if des != None or des != '':
             des = des.translate(None, '";').strip()
             if len(des) > len(self.mission_des):
                 self.mission_des = des
          return self.mission_des 
          
-     def folder_name(self, original_folder_name):
-         '''  Generate new folder name from the acquired data '''
+    def folder_name(self, original_folder_name):
+         """ generate new folder name from the acquired data """
          
          islands = ['chernarus', 'utes', 'zagrabad', 'takistan', 'bystrica', 
          'bukovina', 'shapur', 'desert', 'sahrani', 'imrali', 'thirskw', 
@@ -320,14 +326,14 @@ class Mission:
          folder_name = folder_name.rstrip('_').replace('__','_')
          return folder_name
          
-     def copy_and_replace(self, original_file, edit): 
-        ''' rename files in mission folder, erase originals, move copies '''   
+    def copy_and_replace(self, original_file, edit): 
+        """ rename files in mission folder, erase originals, move copies """   
         os.remove(original_file)
         shutil.copy(edit, original_file)
         os.remove(edit)  
      
-     def modify_folders(self, original_name, folder_name):
-        ''' rename folder '''             
+    def modify_folders(self, original_name, folder_name):
+        """ rename folder, warn if duplicate """             
         try:
             os.rename(original_name, folder_name)
         except NameError:
@@ -337,8 +343,8 @@ class Mission:
             folder_name = folder_name + '.DUPLICATE'
             os.rename(original_name, folder_name)    
             
-     def mission_info(self):
-         ''' print out mission info '''
+    def mission_info(self):
+         """ prints out mission info """
          print '\n'
          print '==========================================================================='
          print 'Mission name: ', self.mission_name 
@@ -354,25 +360,25 @@ class Mission:
 fullpath = "F:\Games\Arma 2\Osku's tool\input"
 
 def find_folders(fullpath):
-    ''' search for folders inside main folder '''
+    """ search for folders inside input folder """
     directories = [fullpath + "\\" + x for x in os.listdir(fullpath)]
     return directories
 
 def unpack(fullpath):
-    ''' unpack mission files using Osku's Tool and CPBO '''
+    """ unpack mission files using Osku's Tool and CPBO """
     oskus_input = os.path.dirname(fullpath)
     p = Popen("cmd.exe /c extract.bat", cwd=r"%s" % (oskus_input))
     stdout, stderr = p.communicate()
     
 def repack(fullpath):
-    ''' repack mission files using Osku's Tool and CPBO '''
+    """ repack mission files using Osku's Tool and CPBO """
     oskus_repack = os.path.dirname(fullpath)
     p = Popen("cmd.exe /c repack.bat", cwd=r"%s" % (oskus_repack))
     stdout, stderr = p.communicate()
 
 def main():
-    ''' calls function to search for missions and then process them one by one,
-    copy files, rename folders, and write data to csv file''' 
+    """ calls function to search for missions and then process them iteratively,
+    copy files, rename folders, and write data to csv file """ 
     
     unpack(fullpath)
                 
