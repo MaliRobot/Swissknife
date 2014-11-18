@@ -2,6 +2,7 @@
 import re, os, shutil, csv
 from urllib import unquote
 from subprocess import Popen
+from unicodedata  import normalize
 from Tkinter import *
 
 class Window:
@@ -119,7 +120,9 @@ class Mission:
                 elif '"thirskw"' in line:
                     self.island = 'thirskw'
                 elif all_in_arma_island.match(line):
-                    self.island = line.replace('"aia_','').replace('_config"','').strip()
+                    self.island = line.replace('"aia_','').replace('_config"','').strip().rstrip(',')
+                    if self.island == 'misc_e':
+                        self.island = 'unknown_island'
                 elif '"bootcamp_acr"' in line:
                     self.island = 'bootcamp_acr'
                 elif '"smd_sahrani_a2"' in line:
@@ -181,9 +184,9 @@ class Mission:
                         self.mission_name = load_name.group()[3:]
                         in_brackets = re.compile(r'\[[^)]*\]')
                         self.mission_name = re.sub(in_brackets, '', self.mission_name)
-                        self.mission_name = self.mission_name.split(';')[0].lower()
-                        self.mission_name = self.mission_name.rstrip('_').replace('__','_').replace(' ','_')
-                        self.mission_name = self.mission_name.translate(None, '";,*=-()\'.&#/<>|')  
+                        self.mission_name = self.mission_name.strip().split(';')[0].lower()
+                        self.mission_name = self.mission_name.strip(' _').replace('__','_').replace(' ','_')
+                        self.mission_name = self.mission_name.translate(None, '";,*=-()\'.&#/<>|').rstrip('_') 
                     print 'mission name is ', self.mission_name
                 
                 # checking mission description
@@ -323,20 +326,20 @@ class Mission:
          # if mission name is not found in ext, look for mission name in file name                               
          if self.mission_name == 'no_name' or self.mission_name == '':
              name = unquote(original_folder_name)
-             name = name.translate(None, '";,*=-()&#/<>|').rstrip('_').replace('__','_').replace(' ','_').split(".")[0].lower()
+             name = name.translate(None, '";,*=-()&#/<>|').replace('__','_').replace(' ','_').split(".")[0].lower()
              self.mission_name = name
              in_brackets = re.compile(r'\[(^)]*\)')
              self.mission_name = re.sub(in_brackets, '', self.mission_name)
              in_brackets_sq = re.compile(r'\[[^)]*\]')
              self.mission_name = re.sub(in_brackets_sq, '', self.mission_name)
+             self.mission_name = self.mission_name.rstrip('_')
              print 'name from filename is ', self.mission_name
-              
             
          # make new folder name using data found in files
          if game_type == 'sp':
              folder_name = game_type, str(addons), '_', self.mission_name, '.', self.island
          else:                 
-             folder_name = game_type, str(addons), player_count, '_', self.mission_name, '.', self.island # not needed, Osku's Tool adds .pbo  , '.pbo'
+             folder_name = game_type, str(addons), player_count, '_', self.mission_name, '.', self.island # '.pbo' not needed, Osku's Tool adds .pbo   
          
          # final checks - removal of unwanted characters
          folder_name = ''.join(folder_name)
@@ -410,6 +413,11 @@ def arma_island_name_lookup(island):
         return island_collection[island]
     return None
 
+#def translate_non_alphanumerics(to_translate, translate_to=u''):
+#    not_letters_or_digits = u'!"#%\'()*+,-./:;<=>?[\]^`{|}~'
+#    translate_table = dict((ord(char), translate_to) for char in not_letters_or_digits)
+#    return to_translate.translate(translate_table)
+
 def main():
     """ calls function to search for missions and then process them iteratively,
     copy files, rename folders, and write data to csv file """ 
@@ -450,8 +458,21 @@ def main():
             mission.copy_and_replace(mission.far_file.keys()[0], far)
         
         # rename folder
-        folder_name = folder_name.translate(None, '!#$:;*,"=-')
-        mission.modify_folders(mis, fullpath + '\\' + folder_name)
+        if isinstance(folder_name, unicode) == False:
+             folder_name = folder_name.translate(None, '!#$:;*,"=-[]').rstrip('_')
+             folder_name_uni = normalize('NFC', folder_name.decode("utf-8")) 
+             #self.mission_name = a.encode('utf8', 'replace')
+             #print isinstance(folder_name_uni, unicode) 
+             #self.mission_name = a
+             #self.mission_name = u"".join([c for c in tmp if not unicodedata.combining(c)])  
+             #print 'convert to utf', folder_name_uni 
+        #if isinstance(folder_name, unicode):
+             #folder_name_uni = translate_non_alphanumerics(folder_name_uni)
+             mission.modify_folders(mis, fullpath + '\\' + folder_name_uni)
+             #folder_name_uni = normalize('NFC', folder_name.decode("ASCII")) 
+        #else:
+        #    folder_name = folder_name.translate(None, '!#$:;*,"=-')
+        #    mission.modify_folders(mis, fullpath + '\\' + folder_name)
         
         island_lookup = arma_island_name_lookup(mission.island)
         if island_lookup is not None:
