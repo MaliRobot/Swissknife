@@ -460,7 +460,7 @@ def main():
             island = mission.island
             
         # insert entry in mission list csv
-        writer.writerow((mission.player_count, folder_name, mission.mission_des, mission.author, '', '', '', island.capitalize(), original_folder_name))
+        writer.writerow((mission.player_count, folder_name, mission.mission_des, mission.author, '', '', '', island.title(), original_folder_name))
     list_file.close()
     
     repack(fullpath)
