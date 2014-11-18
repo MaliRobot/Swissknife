@@ -139,8 +139,8 @@ class Mission:
                                          
                 outfile.write(line)
                 
-         if (self.island != 'altis' or self.island != 'stratis') and self.addons_on == False:
-             self.addons_on = True
+         #if (self.island != 'altis' or self.island != 'stratis') and self.addons_on == False:
+         #    self.addons_on = True
                 
          infile.close()
          outfile.close()
