@@ -90,6 +90,7 @@ class Mission:
          new_sqm = 'new_sqm.sqm'
          
          overview_text_check = re.compile('\s*overviewText[ =]', re.IGNORECASE)
+         all_in_arma_island = re.compile('\s*"aia_', re.IGNORECASE)
          
          infile = open(self.sqm_file.keys()[0], 'r')
          outfile = open(new_sqm, 'w')
@@ -105,7 +106,7 @@ class Mission:
                     print 'counting players', self.player_count
                     self.player_count +=1
                     
-                # checking addons
+                # checking addons and island
                 elif ('addOns[]=' in line or 'addOnsAuto[]=' in line) and self.addons_on == False:
                     watch_for_addons = True
                     print 'addons: ', self.addons_on 
@@ -115,6 +116,16 @@ class Mission:
                     self.island = 'altis'
                 elif '"a3_map_stratis"' in line:
                     self.island = 'stratis'
+                elif '"thirskw"' in line:
+                    self.island = 'thirskw'
+                elif all_in_arma_island.match(line):
+                    self.island = line.replace('"aia_','').replace('_config"','').strip()
+                elif '"bootcamp_acr"' in line:
+                    self.island = 'bootcamp_acr'
+                elif '"smd_sahrani_a2"' in line:
+                    self.island = 'smd_sahrani_a2'
+                elif '"woodland_acr"' in line:
+                    self.island = 'woodland_acr'
                 elif watch_for_addons == True and self.addons_on == False:  
                     if ('"a3_') not in line and ('"A3_') not in line:
                         if '{' not in line: 
@@ -127,6 +138,10 @@ class Mission:
                     print 'mission description is ', self.mission_des 
                                          
                 outfile.write(line)
+                
+         if (self.island != 'altis' or self.island != 'stratis') and self.addons_on == False:
+             self.addons_on = True
+                
          infile.close()
          outfile.close()
          sqm_data = [self.player_count, self.island, self.addons_on]              
@@ -271,7 +286,9 @@ class Mission:
          
          islands = ['chernarus', 'utes', 'zagrabad', 'takistan', 'bystrica', 
          'bukovina', 'shapur', 'desert', 'sahrani', 'imrali', 'thirskw', 
-         'thirsk', 'namalsk', 'fallujah'] 
+         'thirsk', 'namalsk', 'fallujah', 'lingor', 'afghan', 'rahmadi', 
+         'southern_sahrani', 'united_sahrani', 'porto', 'takistan_mountains',
+         'chernarus_summer', 'proving_grounds'] 
             
          game_type = self.game_type[:2]
          
@@ -333,7 +350,8 @@ class Mission:
         os.remove(edit)  
      
     def modify_folders(self, original_name, folder_name):
-        """ rename folder, warn if duplicate """             
+        """ rename folder, warn if duplicate """  
+        print original_name, folder_name           
         try:
             os.rename(original_name, folder_name)
         except NameError:
@@ -375,6 +393,22 @@ def repack(fullpath):
     oskus_repack = os.path.dirname(fullpath)
     p = Popen("cmd.exe /c repack.bat", cwd=r"%s" % (oskus_repack))
     stdout, stderr = p.communicate()
+
+def arma_island_name_lookup(island):
+    island_collection = {'thirskw' : 'thirsk winter', 
+                         'chernarus_summer' : 'chernarus summer',
+                         'bootcamp_acr' : 'bukovina', 
+                         'woodland_acr' : 'bystrica', 
+                         'afghan' : 'afghanistan', 
+                         'smd_sahrani_a2' : 'sahrani',
+                         'shapur_baf' : 'shapur', 
+                         'provinggrounds_pmc' : 'proving grounds',
+                         'desert_e' : 'desert',
+                         'mountains_acr' : 'takistan cutout'}
+    
+    if island in island_collection:
+        return island_collection[island]
+    return None
 
 def main():
     """ calls function to search for missions and then process them iteratively,
@@ -419,8 +453,14 @@ def main():
         folder_name = folder_name.translate(None, '!#$:;*,"=-')
         mission.modify_folders(mis, fullpath + '\\' + folder_name)
         
+        island_lookup = arma_island_name_lookup(mission.island)
+        if island_lookup is not None:
+            island = island_lookup
+        else:
+            island = mission.island
+            
         # insert entry in mission list csv
-        writer.writerow((mission.player_count, folder_name, mission.mission_des, mission.author, '', '', '', mission.island.capitalize(), original_folder_name))
+        writer.writerow((mission.player_count, folder_name, mission.mission_des, mission.author, '', '', '', island.capitalize(), original_folder_name))
     list_file.close()
     
     repack(fullpath)
