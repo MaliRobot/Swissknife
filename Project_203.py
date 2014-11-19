@@ -136,7 +136,7 @@ class Mission:
                             
                 # check if mission description is inside sqm
                 elif overview_text_check.match(line):
-                    des = line.split("=")[1]
+                    des = line.split("=")[1].split(";")[0]
                     self.mission_des = self.mission_description(des)
                     print 'mission description is ', self.mission_des 
                                          
@@ -213,7 +213,7 @@ class Mission:
                 elif "author =" in line.lower():
                     print 'checking mission author name'
                     self.author = ' '.join(line.split(' ')[2:])
-                    self.author = self.author.translate(None, '"";.[]')
+                    self.author = self.author.translate(None, '"";.[]').split(";")[0]
                     print 'mission author: ', self.author         
                 
                 outfile.write(line)              
@@ -333,7 +333,11 @@ class Mission:
              in_brackets_sq = re.compile(r'\[[^)]*\]')
              self.mission_name = re.sub(in_brackets_sq, '', self.mission_name)
              self.mission_name = self.mission_name.rstrip('_')
-             print 'name from filename is ', self.mission_name
+         # this check is to get rid of repetition of player count and mission type
+         if self.mission_name[0:4] == game_type + player_count: 
+             self.mission_name = self.mission_name[5:]
+                 
+         print 'name from filename is ', self.mission_name
             
          # make new folder name using data found in files
          if game_type == 'sp':
