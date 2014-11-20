@@ -129,6 +129,8 @@ class Mission:
                     self.island = 'smd_sahrani_a2'
                 elif '"woodland_acr"' in line:
                     self.island = 'woodland_acr'
+                elif '"pja305"' in line:
+                    self.island = 'n\'ziwasogo'
                 elif watch_for_addons == True and self.addons_on == False:  
                     if ('"a3_') not in line and ('"A3_') not in line:
                         if '{' not in line: 
@@ -291,7 +293,7 @@ class Mission:
          'bukovina', 'shapur', 'desert', 'sahrani', 'imrali', 'thirskw', 
          'thirsk', 'namalsk', 'fallujah', 'lingor', 'afghan', 'rahmadi', 
          'southern_sahrani', 'united_sahrani', 'porto', 'takistan_mountains',
-         'chernarus_summer', 'proving_grounds'] 
+         'chernarus_summer', 'proving_grounds', 'n\'ziwasogo'] 
             
          game_type = self.game_type[:2]
          
@@ -336,6 +338,8 @@ class Mission:
          # this check is to get rid of repetition of player count and mission type
          if self.mission_name[0:4] == game_type + player_count: 
              self.mission_name = self.mission_name[5:]
+         if self.mission_name[0:5] == game_type + str(addons) + player_count: 
+             self.mission_name = self.mission_name[6:]
                  
          print 'name from filename is ', self.mission_name
             
