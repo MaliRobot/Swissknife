@@ -345,7 +345,10 @@ class Mission:
             
          # make new folder name using data found in files
          if game_type == 'sp':
-             folder_name = game_type, str(addons), '_', self.mission_name, '.', self.island
+             if game_type == self.mission_name[0:2]:
+                folder_name = self.mission_name, '.', self.island
+             else: 
+                folder_name = game_type, str(addons), '_', self.mission_name, '.', self.island
          else:                 
              folder_name = game_type, str(addons), player_count, '_', self.mission_name, '.', self.island # '.pbo' not needed, Osku's Tool adds .pbo   
          
@@ -385,9 +388,6 @@ class Mission:
          print 'Author: ', self.author
          print '==========================================================================='
                                 
-# hardcoded fullpath for testing purposes
-fullpath = "F:\Games\Arma 2\Osku's tool\input"
-
 def find_folders(fullpath):
     """ search for folders inside input folder """
     directories = [fullpath + "\\" + x for x in os.listdir(fullpath)]
@@ -421,12 +421,7 @@ def arma_island_name_lookup(island):
         return island_collection[island]
     return None
 
-#def translate_non_alphanumerics(to_translate, translate_to=u''):
-#    not_letters_or_digits = u'!"#%\'()*+,-./:;<=>?[\]^`{|}~'
-#    translate_table = dict((ord(char), translate_to) for char in not_letters_or_digits)
-#    return to_translate.translate(translate_table)
-
-def main():
+def main(fullpath):
     """ calls function to search for missions and then process them iteratively,
     copy files, rename folders, and write data to csv file """ 
     
@@ -469,18 +464,7 @@ def main():
         if isinstance(folder_name, unicode) == False:
              folder_name = folder_name.translate(None, '!#$:;*,"=-[]').rstrip('_')
              folder_name_uni = normalize('NFC', folder_name.decode("utf-8")) 
-             #self.mission_name = a.encode('utf8', 'replace')
-             #print isinstance(folder_name_uni, unicode) 
-             #self.mission_name = a
-             #self.mission_name = u"".join([c for c in tmp if not unicodedata.combining(c)])  
-             #print 'convert to utf', folder_name_uni 
-        #if isinstance(folder_name, unicode):
-             #folder_name_uni = translate_non_alphanumerics(folder_name_uni)
              mission.modify_folders(mis, fullpath + '\\' + folder_name_uni)
-             #folder_name_uni = normalize('NFC', folder_name.decode("ASCII")) 
-        #else:
-        #    folder_name = folder_name.translate(None, '!#$:;*,"=-')
-        #    mission.modify_folders(mis, fullpath + '\\' + folder_name)
         
         island_lookup = arma_island_name_lookup(mission.island)
         if island_lookup is not None:
@@ -494,4 +478,19 @@ def main():
     
     repack(fullpath)
     
-main()
+    
+if __name__ == "__main__":
+    # hardcoded fullpath for testing purposes
+    location = os.getcwd()
+    filenames = next(os.walk(location))[2]
+    #print filenames
+    if "extract.bat" in filenames and "repack.bat" in filenames and "reset.bat":
+        fullpath = location  + "\\input"
+    #else:
+    #    fullpath = "F:\Games\Arma 2\Osku's tool\input"
+    #print os.listdir(fullpath + "\\input")
+    if os.listdir(fullpath) == []:
+        print "no files to work with!"
+    else:
+        main(fullpath)
+    
