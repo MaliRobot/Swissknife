@@ -1,0 +1,5 @@
+Project Swissknife
+
+Modular program written for purposes of Arma 3 game server maintenance for Comrades in Arms (CiA) clan.
+
+First module (203) - unpacks and edits mission files according to CiA standards, generates filenames from data within files.
