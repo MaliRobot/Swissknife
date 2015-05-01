@@ -96,6 +96,12 @@ class Mission:
          infile = open(self.sqm_file.keys()[0], 'r')
          outfile = open(new_sqm, 'w')
          
+         """
+            WHAT IF THIS COULD BE HANDLED BY READING ENTIRE FILE
+            VIA 'READ' AND THEN SEARCHING FOR STRINGS AND DETELING
+            BRIEFING LINE
+            """ 
+         
          for line in infile:
                 # erasing briefing name
                 if 'briefingName="' in line or 'briefingName' in line:
@@ -120,9 +126,10 @@ class Mission:
                 elif '"thirskw"' in line:
                     self.island = 'thirskw'
                 elif all_in_arma_island.match(line):
-                    self.island = line.replace('"aia_','').replace('_config"','').strip().rstrip(',')
-                    if self.island == 'misc_e':
-                        self.island = 'unknown_island'
+                    if self.island == 'unknown_island':
+                        self.island = line.replace('"aia_','').replace('_config"','').strip().rstrip(',')
+                        if self.island != 'saralite' or self.island != 'sara_dbe1' or self.island == 'sara':
+                            self.island = 'unknown_island'
                 elif '"bootcamp_acr"' in line:
                     self.island = 'bootcamp_acr'
                 elif '"smd_sahrani_a2"' in line:
@@ -131,6 +138,22 @@ class Mission:
                     self.island = 'woodland_acr'
                 elif '"pja305"' in line:
                     self.island = 'n\'ziwasogo'
+                elif '"map_vr"' in line:
+                    self.island = 'vr'
+                elif '"mcn_hazarkot"' in line:
+                    self.island = 'mcn_hazarkot'
+                elif '"fata"' in line:
+                    self.island = 'fata'
+                elif '"panovo_island"' in line:
+                    self.island = 'panovo'
+                elif '"colleville_island"' in line:
+                    self.island = 'colleville_island'
+                elif '"baranow_island"' in line:
+                    self.island = 'baranow_island'
+                elif '"ivachev_island"' in line:
+                    self.island = 'ivachev_island'
+                elif '"staszow_island"' in line:
+                    self.island = 'staszow_island'
                 elif watch_for_addons == True and self.addons_on == False:  
                     if ('"a3_') not in line and ('"A3_') not in line:
                         if '{' not in line: 
@@ -289,11 +312,14 @@ class Mission:
     def folder_name(self, original_folder_name):
          """ generate new folder name from the acquired data """
          
-         islands = ['chernarus', 'utes', 'zagrabad', 'takistan', 'bystrica', 
+         islands = ['chernarus', 'utes', 'zargabad', 'takistan', 'bystrica', 
          'bukovina', 'shapur', 'desert', 'sahrani', 'imrali', 'thirskw', 
-         'thirsk', 'namalsk', 'fallujah', 'lingor', 'afghan', 'rahmadi', 
+         'thirsk', 'namalsk', 'fallujah', 'lingor', 'clafghan', 'rahmadi', 
          'southern_sahrani', 'united_sahrani', 'porto', 'takistan_mountains',
-         'chernarus_summer', 'proving_grounds', 'n\'ziwasogo'] 
+         'mountains_acr', 'chernarus_summer', 'proving_grounds', 'n\'ziwasogo', 
+         'praa_av', 'fdf_isle1_a', 'provinggrounds_pmc', 'staszow_island', 'panovo', 
+         'colleville_island', '_island', 'sara', 'saralite', 'sara_dbe1', 
+         'afghanistan', 'vr'] 
             
          game_type = self.game_type[:2]
          
@@ -315,7 +341,7 @@ class Mission:
          # temporary solution: when game type is not recognized - it is set to coop
          if game_type == 'un':
              game_type = 'co'
-          
+         
          # if island is not found in mission files, try looking in filename
          if self.island == 'unknown_island':
              for island in islands:
@@ -336,6 +362,13 @@ class Mission:
              self.mission_name = re.sub(in_brackets_sq, '', self.mission_name)
              self.mission_name = self.mission_name.rstrip('_')
          # this check is to get rid of repetition of player count and mission type
+         """
+            THIS DOES NOT GET RID OF PLAYER COUNT IN MISSION NAME ALWAYS
+            CASES WHERE IT DOES NOT:
+                co@05_co5_the_convoy_ukf.clafghan
+                co@08_co@08_weapon_of_mass_destruction.bootcamp_acr
+            BETTER USE RE
+         """
          if self.mission_name[0:4] == game_type + player_count: 
              self.mission_name = self.mission_name[5:]
          if self.mission_name[0:5] == game_type + str(addons) + player_count: 
@@ -373,7 +406,10 @@ class Mission:
         except WindowsError:
             print 'warning: folder with the same name already exists or bad filename'
             folder_name = folder_name + '.DUPLICATE'
-            os.rename(original_name, folder_name)    
+            os.rename(original_name, folder_name)
+            """
+            FIND A WAY TO HANDLE DUPLICATES REGARDLESS OF HOW MANY THERE ARE
+            """    
             
     def mission_info(self):
          """ prints out mission info """
@@ -406,16 +442,30 @@ def repack(fullpath):
     stdout, stderr = p.communicate()
 
 def arma_island_name_lookup(island):
-    island_collection = {'thirskw' : 'thirsk winter', 
-                         'chernarus_summer' : 'chernarus summer',
-                         'bootcamp_acr' : 'bukovina', 
-                         'woodland_acr' : 'bystrica', 
-                         'afghan' : 'afghanistan', 
-                         'smd_sahrani_a2' : 'sahrani',
-                         'shapur_baf' : 'shapur', 
-                         'provinggrounds_pmc' : 'proving grounds',
-                         'desert_e' : 'desert',
-                         'mountains_acr' : 'takistan cutout'}
+    island_collection = {'thirskw' : 'Thirsk Winter',
+                         'thirsk' : 'Thirsk', 
+                         'chernarus_summer' : 'Chernarus summer',
+                         'bootcamp_acr' : 'Bukovina', 
+                         'woodland_acr' : 'Bystrica', 
+                         'afghan' : 'Afghanistan',
+                         'praa_av' : 'Afghan Village', 
+                         'smd_sahrani_a2' : 'Sahrani',
+                         'shapur_baf' : 'Shapur', 
+                         'provinggrounds_pmc' : 'Proving Grounds',
+                         'desert_e' : 'Desert',
+                         'mountains_acr' : 'Takistan Cutout',
+                         'vr' : 'VR',
+                         'mcn_hazarkot' : 'Hazar-Kot',
+                         'fata' : 'Fata',
+                         'colleville_island' : 'Colleville',
+                         'baranow_island' : 'Baranow Island',
+                         'ivachev_island' : 'Ivachev Island',
+                         'staszow_island' : 'Staszow Island',
+                         'panovo' : 'Panovo', 
+                         'fdf_isle1_a' : 'Podagorsk',
+                         'sara' : 'Sahrani',
+                         'saralite' : 'South Sahrani',
+                         'sara_dbe1' : 'United Sahrani'}
     
     if island in island_collection:
         return island_collection[island]
@@ -481,11 +531,11 @@ def main(fullpath):
     
 if __name__ == "__main__":
     # hardcoded fullpath for testing purposes
-    location = os.getcwd()
-    filenames = next(os.walk(location))[2]
+    fullpath = os.getcwd()
+    filenames = next(os.walk(fullpath))[2]
     #print filenames
-    if "extract.bat" in filenames and "repack.bat" in filenames and "reset.bat":
-        fullpath = location  + "\\input"
+    if "extract.bat" in filenames and "repack.bat" in filenames and "reset.bat" in filenames:
+        fullpath = fullpath  + "\\input"
     #else:
     #    fullpath = "F:\Games\Arma 2\Osku's tool\input"
     #print os.listdir(fullpath + "\\input")
