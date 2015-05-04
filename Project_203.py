@@ -98,15 +98,15 @@ class Mission:
          
          """
             WHAT IF THIS COULD BE HANDLED BY READING ENTIRE FILE
-            VIA 'READ' AND THEN SEARCHING FOR STRINGS AND DETELING
+            VIA 'READ' AND THEN SEARCHING FOR STRINGS AND DELETEING
             BRIEFING LINE
             """ 
          
          for line in infile:
                 # erasing briefing name
-                if 'briefingName="' in line or 'briefingName' in line:
+                if re.findall(r'briefingName=\"(.+?)\"', line) != []:
                     print 'briefing name erased in .sqm!'
-                    line = line.replace(line,'        briefingName="";\n')
+                    line = re.sub(r'briefingName=\"(.+?)\"', 'briefingName=""', line)
                     
                 # counting number of players
                 elif 'player="' in line:
@@ -369,10 +369,11 @@ class Mission:
                 co@08_co@08_weapon_of_mass_destruction.bootcamp_acr
             BETTER USE RE
          """
-         if self.mission_name[0:4] == game_type + player_count: 
-             self.mission_name = self.mission_name[5:]
-         if self.mission_name[0:5] == game_type + str(addons) + player_count: 
-             self.mission_name = self.mission_name[6:]
+         self.mission_name = re.sub(r'co[\W]{0,1}[0-9]{1,2}', '', self.mission_name)
+         #if self.mission_name[0:4] == game_type + player_count: 
+         #    self.mission_name = self.mission_name[5:]
+         #if self.mission_name[0:5] == game_type + str(addons) + player_count: 
+         #    self.mission_name = self.mission_name[6:]
                  
          print 'name from filename is ', self.mission_name
             
@@ -401,12 +402,13 @@ class Mission:
         print original_name, folder_name           
         try:
             os.rename(original_name, folder_name)
+            return 'Done'
         except NameError:
             print 'warning: required files are not found'
+            return 'ERROR: Files cannot be found'
         except WindowsError:
             print 'warning: folder with the same name already exists or bad filename'
-            folder_name = folder_name + '.DUPLICATE'
-            os.rename(original_name, folder_name)
+            return 'ERROR: Possible duplicate mission'
             """
             FIND A WAY TO HANDLE DUPLICATES REGARDLESS OF HOW MANY THERE ARE
             """    
@@ -511,10 +513,14 @@ def main(fullpath):
             mission.copy_and_replace(mission.far_file.keys()[0], far)
         
         # rename folder
-        if isinstance(folder_name, unicode) == False:
-             folder_name = folder_name.translate(None, '!#$:;*,"=-[]').rstrip('_')
+        folder_name = folder_name.translate(None, '!#$:;*,"=-[]').rstrip('_')
+        if isinstance(folder_name, unicode) == False:             
              folder_name_uni = normalize('NFC', folder_name.decode("utf-8")) 
-             mission.modify_folders(mis, fullpath + '\\' + folder_name_uni)
+             rename_folder = mission.modify_folders(mis, fullpath + '\\' + folder_name_uni)                  
+        else:
+             rename_folder = mission.modify_folders(mis, fullpath + '\\' + folder_name)
+        if rename_folder != 'Done':
+             folder_name = folder_name + ' ' + rename_folder
         
         island_lookup = arma_island_name_lookup(mission.island)
         if island_lookup is not None:
