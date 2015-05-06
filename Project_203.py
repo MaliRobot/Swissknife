@@ -206,10 +206,8 @@ class Mission:
                 elif on_load_name_check.match(line):
                     load_name = re.search('=(.*$)', line)
                     if load_name != None:
-                        print '1', self.mission_name
                         self.mission_name = load_name.group()[2:]
                         in_brackets = re.compile(r'\[[^)]*\]')
-                        print '2', self.mission_name
                         self.mission_name = re.sub(in_brackets, '', self.mission_name)
                         self.mission_name = self.mission_name.strip().split(';')[0].lower()
                         self.mission_name = self.mission_name.strip(' _').replace('__','_').replace(' ','_')
