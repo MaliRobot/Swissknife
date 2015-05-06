@@ -204,10 +204,12 @@ class Mission:
                 
                 # checking mission name     
                 elif on_load_name_check.match(line):
-                    load_name = re.search(' (.*$)', line)
+                    load_name = re.search('=(.*$)', line)
                     if load_name != None:
-                        self.mission_name = load_name.group()[3:]
+                        print '1', self.mission_name
+                        self.mission_name = load_name.group()[2:]
                         in_brackets = re.compile(r'\[[^)]*\]')
+                        print '2', self.mission_name
                         self.mission_name = re.sub(in_brackets, '', self.mission_name)
                         self.mission_name = self.mission_name.strip().split(';')[0].lower()
                         self.mission_name = self.mission_name.strip(' _').replace('__','_').replace(' ','_')
@@ -370,10 +372,13 @@ class Mission:
             BETTER USE RE
          """
          self.mission_name = re.sub(r'co[\W]{0,1}[0-9]{1,2}', '', self.mission_name)
-         #if self.mission_name[0:4] == game_type + player_count: 
-         #    self.mission_name = self.mission_name[5:]
-         #if self.mission_name[0:5] == game_type + str(addons) + player_count: 
-         #    self.mission_name = self.mission_name[6:]
+         self.mission_name = re.sub(r'coop[\W]{0,1}[0-9]{1,4}', '', self.mission_name)
+         self.mission_name = re.sub(r'(.+?)\1+', r'\1', self.mission_name)
+         
+         if self.mission_name[0:4] == game_type + player_count: 
+             self.mission_name = self.mission_name[5:]
+         if self.mission_name[0:5] == game_type + str(addons) + player_count: 
+             self.mission_name = self.mission_name[6:]
                  
          print 'name from filename is ', self.mission_name
             
@@ -386,8 +391,9 @@ class Mission:
          else:                 
              folder_name = game_type, str(addons), player_count, '_', self.mission_name, '.', self.island # '.pbo' not needed, Osku's Tool adds .pbo   
          
-         # final checks - removal of unwanted characters
+         # final checks - removal of unwanted characters and repetitions (co, sp, etc.)
          folder_name = ''.join(folder_name)
+         #folder_name = re.sub(r'(.+?)\1+', r'\1', folder_name)
          folder_name = folder_name.rstrip('_').replace('__','_')
          return folder_name
          
