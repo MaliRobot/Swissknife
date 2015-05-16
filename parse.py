@@ -3,51 +3,6 @@ import re, os, shutil, csv
 from urllib import unquote
 from subprocess import Popen
 from unicodedata  import normalize
-from Tkinter import *
-
-class Window:
-    """ Interface from where you can pass location of Osku's Tool to the
-    program (fullpath) if Swissknife is not in the same folder. """
-    # temporarily disabled for more convenient testing
-    def __init__(self):
-        
-        self.master = Tk()
-        self.master.geometry("400x150")
-        self.master.title("Swissknife")
-        
-        frame = Frame(self.master, width=500, height=100)
-        
-        self.first_label = Label(self.master, text="Enter Osku's Tool input full path:")
-        self.first_label.pack(side=TOP)
-        
-        # area to paste path for Osku's tool
-        self.entry = Entry(frame, width = 300)
-        self.entry.pack(side=TOP)
-        frame.pack()
-        self.entry.focus_set()
-        
-        # process button
-        self.button = Button(frame, text="Process", fg="red", width = 10, height=2, command=self.entry_get)
-        self.button.pack(side=LEFT, padx=50, pady=10)
-        
-        # quit button
-        self.button2 = Button(frame, text="Quit", width = 10, height = 2, command=self.quit)
-        self.button2.pack(side=RIGHT, padx=60, pady = 10)
-        
-        # label
-        self.second_label = Label(self.master, text="Example: F:\Games\Arma 2\Osku's tool\input")
-        self.second_label.pack(side=TOP)
-        
-    def start(self):
-        self.master.mainloop()
-    
-    def entry_get(self):
-        print self.entry.get()
-        fullpath = self.entry.get()
-        search_files(fullpath)
-     
-    def quit(self):
-        self.master.destroy()  
 
 class Mission:
     """ Class to store and process mission data and mission files. """
@@ -69,7 +24,7 @@ class Mission:
                 elif f == 'FAR_revive_init.sqf':
                     self.far_file[os.path.join(dirpath, f)] = os.path.basename(f)
                 
-         print self.sqm_file, self.ext_file, self.btc_file, self.far_file
+         print self.sqm_file, self.ext_file, self.btc_file, self.far_file, path
          
          self.player_count = 0
          self.island  = 'unknown_island'
@@ -83,7 +38,7 @@ class Mission:
          """ Search through sqm file to look for number of players, find out if 
          mission uses addons, erase briefing info parameter and get mission 
          description if it's there """
-         
+
          if self.sqm_file == {}:
              return None
          
@@ -95,12 +50,6 @@ class Mission:
          
          infile = open(self.sqm_file.keys()[0], 'r')
          outfile = open(new_sqm, 'w')
-         
-         """
-            WHAT IF THIS COULD BE HANDLED BY READING ENTIRE FILE
-            VIA 'READ' AND THEN SEARCHING FOR STRINGS AND DELETEING
-            BRIEFING LINE
-            """ 
          
          for line in infile:
                 # erasing briefing name
@@ -147,13 +96,13 @@ class Mission:
                 elif '"panovo_island"' in line:
                     self.island = 'panovo'
                 elif '"colleville_island"' in line:
-                    self.island = 'colleville_island'
+                    self.island = 'colleville'
                 elif '"baranow_island"' in line:
-                    self.island = 'baranow_island'
+                    self.island = 'baranow'
                 elif '"ivachev_island"' in line:
-                    self.island = 'ivachev_island'
+                    self.island = 'ivachev'
                 elif '"staszow_island"' in line:
-                    self.island = 'staszow_island'
+                    self.island = 'staszow'
                 elif watch_for_addons == True and self.addons_on == False:  
                     if ('"a3_') not in line and ('"A3_') not in line:
                         if '{' not in line: 
@@ -254,7 +203,6 @@ class Mission:
          if self.btc_file == {}:
              return None
              
-         has_respawn_btc = False
          btc_0 = 'BTC_disable_respawn = 0;'
          btc_1 = 'BTC_disable_respawn = 1;'  
          
@@ -262,18 +210,29 @@ class Mission:
          
          infile = open(self.btc_file.keys()[0], 'r')
          source = self.btc_file.keys()[0]
-         outfile = open(new_btc, 'w')
          
-         for line in infile:
-            if btc_0 in line:
-                print 'found BTC'
-                line = line.replace(line, '%s\n' % (btc_1))
-                print 'BTC line replacement: ', line
-                has_respawn_btc = True
-                print 'BTC: ' + str(has_respawn_btc)
-            outfile.write(line)            
+         data = infile.read()
+         if btc_0 in data:  
+             print 'btc respawn not disabled'
+             outfile = open(new_btc, 'w')
+             data = data.replace("BTC_disable_respawn = 0;", "BTC_disable_respawn = 1;")
+             outfile.write(data)
+             outfile.close()
+             print 'btc respawn now disabled'                                       
+         elif btc_1 not in data.splitlines():
+             outfile = open(new_btc, 'w')             
+             for line in infile:
+                 if 'EDITABLE' in line:
+                     line = line + '\nBTC_disable_respawn = 1;'
+                     print 'disable respawn parameter added'
+                 outfile.write(line + '\n')
+             outfile.close()
+         else:
+            print 'btc respawn already disabled'
+            infile.close()
+            return []
+            
          infile.close()
-         outfile.close()
          return [source, new_btc]
          
     def examine_far(self):
@@ -362,13 +321,6 @@ class Mission:
              self.mission_name = re.sub(in_brackets_sq, '', self.mission_name)
              self.mission_name = self.mission_name.rstrip('_')
          # this check is to get rid of repetition of player count and mission type
-         """
-            THIS DOES NOT GET RID OF PLAYER COUNT IN MISSION NAME ALWAYS
-            CASES WHERE IT DOES NOT:
-                co@05_co5_the_convoy_ukf.clafghan
-                co@08_co@08_weapon_of_mass_destruction.bootcamp_acr
-            BETTER USE RE
-         """
          self.mission_name = re.sub(r'co[\W]{0,1}[0-9]{1,2}', '', self.mission_name)
          self.mission_name = re.sub(r'coop[\W]{0,1}[0-9]{1,4}', '', self.mission_name)
          self.mission_name = re.sub(r'(.+?)\1+', r'\1', self.mission_name)
@@ -464,9 +416,9 @@ def arma_island_name_lookup(island):
                          'mcn_hazarkot' : 'Hazar-Kot',
                          'fata' : 'Fata',
                          'colleville_island' : 'Colleville',
-                         'baranow_island' : 'Baranow Island',
-                         'ivachev_island' : 'Ivachev Island',
-                         'staszow_island' : 'Staszow Island',
+                         'baranow' : 'Baranow',
+                         'ivachev' : 'Ivachev',
+                         'staszow' : 'Staszow',
                          'panovo' : 'Panovo', 
                          'fdf_isle1_a' : 'Podagorsk',
                          'sara' : 'Sahrani',
@@ -477,17 +429,22 @@ def arma_island_name_lookup(island):
         return island_collection[island]
     return None
 
-def main(fullpath):
+def fetch(path):
     """ calls function to search for missions and then process them iteratively,
     copy files, rename folders, and write data to csv file """ 
     
+    filenames = next(os.walk(path))[2]
+    #print filenames
+    if "extract.bat" in filenames and "repack.bat" in filenames and "reset.bat" in filenames:
+        fullpath = path  + "\\input"
+        
     unpack(fullpath)
                 
     list_file = open('new_missions_list.csv', 'wb')
     writer = csv.writer(list_file)
     
     start = find_folders(fullpath)
-    
+
     for mis in start:
         
         mission = Mission(mis)
@@ -539,18 +496,18 @@ def main(fullpath):
     repack(fullpath)
     
     
-if __name__ == "__main__":
-    # hardcoded fullpath for testing purposes
-    fullpath = os.getcwd()
-    filenames = next(os.walk(fullpath))[2]
-    #print filenames
-    if "extract.bat" in filenames and "repack.bat" in filenames and "reset.bat" in filenames:
-        fullpath = fullpath  + "\\input"
-    #else:
-    #    fullpath = "F:\Games\Arma 2\Osku's tool\input"
-    #print os.listdir(fullpath + "\\input")
-    if os.listdir(fullpath) == []:
-        print "no files to work with!"
-    else:
-        main(fullpath)
+#if __name__ == "__main__":
+#    # hardcoded fullpath for testing purposes
+#    fullpath = os.getcwd()
+#    filenames = next(os.walk(fullpath))[2]
+#    #print filenames
+#    if "extract.bat" in filenames and "repack.bat" in filenames and "reset.bat" in filenames:
+#        fullpath = fullpath  + "\\input"
+#    #else:
+#    #    fullpath = "F:\Games\Arma 2\Osku's tool\input"
+#    #print os.listdir(fullpath + "\\input")
+#    if os.listdir(fullpath) == []:
+#        print "no files to work with!"
+#    else:
+#        main(fullpath)
     
