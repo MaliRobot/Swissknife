@@ -3,6 +3,7 @@ import re, os, shutil, csv
 from urllib import unquote
 from subprocess import Popen
 from unicodedata  import normalize
+from files import *
 
 class Mission:
     """ Class to store and process mission data and mission files. """
@@ -184,10 +185,11 @@ class Mission:
                             print 'game type is: ', game
                 
                 # checking mission makers name
-                elif "author =" in line.lower():
+                elif "author =" in line.lower() or "author=" in line.lower():
                     print 'checking mission author name'
                     self.author = ' '.join(line.split(' ')[2:])
                     self.author = self.author.translate(None, '"";.[]').split(";")[0]
+                    self.author = self.author.strip()
                     print 'mission author: ', self.author         
                 
                 outfile.write(line)              
@@ -343,7 +345,6 @@ class Mission:
          
          # final checks - removal of unwanted characters and repetitions (co, sp, etc.)
          folder_name = ''.join(folder_name)
-         #folder_name = re.sub(r'(.+?)\1+', r'\1', folder_name)
          folder_name = folder_name.rstrip('_').replace('__','_')
          return folder_name
          
@@ -386,19 +387,7 @@ def find_folders(fullpath):
     """ search for folders inside input folder """
     directories = [fullpath + "\\" + x for x in os.listdir(fullpath)]
     return directories
-
-def unpack(fullpath):
-    """ unpack mission files using Osku's Tool and CPBO """
-    oskus_input = os.path.dirname(fullpath)
-    p = Popen("cmd.exe /c extract.bat", cwd=r"%s" % (oskus_input))
-    stdout, stderr = p.communicate()
     
-def repack(fullpath):
-    """ repack mission files using Osku's Tool and CPBO """
-    oskus_repack = os.path.dirname(fullpath)
-    p = Popen("cmd.exe /c repack.bat", cwd=r"%s" % (oskus_repack))
-    stdout, stderr = p.communicate()
-
 def arma_island_name_lookup(island):
     island_collection = {'thirskw' : 'Thirsk Winter',
                          'thirsk' : 'Thirsk', 
@@ -433,17 +422,17 @@ def fetch(path):
     """ calls function to search for missions and then process them iteratively,
     copy files, rename folders, and write data to csv file """ 
     
-    filenames = next(os.walk(path))[2]
+    #filenames = next(os.walk(path))[2]
     #print filenames
-    if "extract.bat" in filenames and "repack.bat" in filenames and "reset.bat" in filenames:
-        fullpath = path  + "\\input"
+    #if "extract.bat" in filenames and "repack.bat" in filenames and "reset.bat" in filenames:
+    fullpath = path  + "\\input"
         
-    unpack(fullpath)
+    unpack_and_backup(path)
                 
     list_file = open('new_missions_list.csv', 'wb')
     writer = csv.writer(list_file)
     
-    start = find_folders(fullpath)
+    start = find_folders(path + '\\' + 'input')
 
     for mis in start:
         
@@ -462,7 +451,8 @@ def fetch(path):
         print folder_name
         
         # copy all files
-        mission.copy_and_replace(mis + '\\mission.sqm', sqm[1])
+        if sqm:
+            mission.copy_and_replace(mis + '\\mission.sqm', sqm[1])
         
         if ext:
             mission.copy_and_replace(mis + '\\description.ext', ext[1])
@@ -493,7 +483,8 @@ def fetch(path):
         writer.writerow((mission.player_count, folder_name, mission.mission_des, mission.author, '', '', '', island.title(), original_folder_name))
     list_file.close()
     
-    repack(fullpath)
+    clear_folder(path + '\\output')
+    repack(path)
     
     
 #if __name__ == "__main__":

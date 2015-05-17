@@ -8,10 +8,11 @@ if __name__ == "__main__":
     if len(argv) > 1:
         if argv[1] == 'gui':
             gui = Window()
-    path = getcwd()
-    if path == '':
-        fullpath = getcwd()
-    if listdir(path) == []:
-        print "no files to work with!"
     else:
-        fetch(path)
+        path = getcwd()
+        if path == '':
+            fullpath = getcwd()
+        if listdir(path) == []:
+            print "no files to work with!"
+        else:
+            fetch(path)
