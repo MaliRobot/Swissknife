@@ -1,6 +1,6 @@
-from subprocess import call, Popen
+from subprocess import Popen
 import os
-from shutil import copy, move, rmtree
+from shutil import move, rmtree
 
 #debugging
 #path = "F:\Games\Osku's tool"
@@ -23,9 +23,10 @@ def clear_folder(path):
 
 def unpack_and_backup(path):
 
-    input_path = path + "\\" + "input"
-    backup_path = path + "\\" + "_backup_"
-    output = path + "\\" + "output"
+    input_path = path + "\\input"
+    backup_path = path + "\\_backup_"
+    output = path + "\\output"
+    cpbo_path = path + "\\cpbo\\cpbo.exe"
     
     check_make(input_path, backup_path, output)
     
@@ -36,7 +37,7 @@ def unpack_and_backup(path):
     for f in missions[0]:
         path = input_path + '\\' + str(f)
         print path
-        p = Popen(["F:\Games\Osku's tool\cpbo\cpbo.exe", "-y", "-e", path])
+        p = Popen([cpbo_path, "-y", "-e", path])
         p.wait()
         
     for f in missions[0]:
@@ -51,8 +52,9 @@ def unpack_and_backup(path):
         
 def repack(path):
 
-    input_path = path + "\\" + "input"
-    output = path + "\\" + "output"
+    input_path = path + "\\input"
+    output = path + "\\output"
+    cpbo_path = path + "\\cpbo\\cpbo.exe"
     
     check_make(input_path, output)
     
@@ -65,7 +67,7 @@ def repack(path):
 
     for f in missions:
         path = input_path + '\\' + str(f)
-        p = Popen(["F:\Games\Osku's tool\cpbo\cpbo.exe", "-y", "-p", path])
+        p = Popen([cpbo_path, "-y", "-p", path])
         p.wait()
         move(path + '.pbo', output)
  
