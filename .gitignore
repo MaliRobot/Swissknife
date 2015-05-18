@@ -41,3 +41,16 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+build/main/logdict2.7.9.final.0-1.log
+build/main/out00-Analysis.toc
+*.toc
+build/main/out00-PYZ.pyz
+*.pkg
+dist/swissknife/bz2.pyd
+*.enc
+*.msg
+dist/swissknife/_MEI/tcl/tzdata/America/Noronha
+*.dll
+*.tcl
+dist/swissknife/_MEI/tcl/tzdata/Africa/Casablanca

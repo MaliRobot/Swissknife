@@ -278,8 +278,8 @@ class Mission:
          'thirsk', 'namalsk', 'fallujah', 'lingor', 'clafghan', 'rahmadi', 
          'southern_sahrani', 'united_sahrani', 'porto', 'takistan_mountains',
          'mountains_acr', 'chernarus_summer', 'proving_grounds', 'n\'ziwasogo', 
-         'praa_av', 'fdf_isle1_a', 'provinggrounds_pmc', 'staszow_island', 'panovo', 
-         'colleville_island', '_island', 'sara', 'saralite', 'sara_dbe1', 
+         'praa_av', 'fdf_isle1_a', 'provinggrounds_pmc', 'staszow', 'panovo', 
+         'colleville', 'baranow', 'ivachev', 'sara', 'saralite', 'sara_dbe1', 
          'afghanistan', 'vr'] 
             
          game_type = self.game_type[:2]
