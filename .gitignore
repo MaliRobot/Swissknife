@@ -26,8 +26,7 @@ $RECYCLE.BIN/
 .LSOverride
 
 # Icon must end with two \r
-Icon
-
+Icon
 # Thumbnails
 ._*
 
@@ -53,4 +52,11 @@ dist/swissknife/bz2.pyd
 dist/swissknife/_MEI/tcl/tzdata/America/Noronha
 *.dll
 *.tcl
-dist/swissknife/_MEI/tcl/tzdata/Africa/Casablanca
+build/swissknife/logdict2.7.9.final.0-1.log
+*.pyc
+build/swissknife/out00-PYZ.pyz
+build/swissknife/warnswissknife.txt
+dist/swissknife.exe
+name=swissknife.spec
+swissknife.spec
+dist/new_missions_list.csv

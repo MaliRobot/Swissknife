@@ -70,7 +70,7 @@ def repack(path):
         p = Popen([cpbo_path, "-y", "-p", path])
         p.wait()
         move(path + '.pbo', output)
- 
+
 # debugging        
 #repack(path)
 

@@ -2,7 +2,6 @@ from parse import fetch
 from window import Window
 from sys import argv
 from os import getcwd, listdir
-import Tkinter
 
 if __name__ == "__main__":
     print argv

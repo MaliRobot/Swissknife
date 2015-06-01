@@ -2,7 +2,6 @@
 import re, os, shutil, csv
 from urllib import unquote
 from subprocess import Popen
-from unicodedata  import normalize
 from files import *
 
 class Mission:
@@ -94,6 +93,12 @@ class Mission:
                     self.island = 'mcn_hazarkot'
                 elif '"fata"' in line:
                     self.island = 'fata'
+                elif '"utes"' in line:
+                    self.island = 'utes'
+                elif '"pra_3"' in line:
+                    self.island = 'kunduz'
+                elif '"a3_map_isladuala3"' in line:
+                    self.island = 'isla_duala'
                 elif '"panovo_island"' in line:
                     self.island = 'panovo'
                 elif '"colleville_island"' in line:
@@ -280,7 +285,7 @@ class Mission:
          'mountains_acr', 'chernarus_summer', 'proving_grounds', 'n\'ziwasogo', 
          'praa_av', 'fdf_isle1_a', 'provinggrounds_pmc', 'staszow', 'panovo', 
          'colleville', 'baranow', 'ivachev', 'sara', 'saralite', 'sara_dbe1', 
-         'afghanistan', 'vr'] 
+         'afghanistan', 'vr', 'kunduz', 'isla_duala'] 
             
          game_type = self.game_type[:2]
          
@@ -313,7 +318,7 @@ class Mission:
                          addons = '@'
           
          # if mission name is not found in ext, look for mission name in file name                               
-         if self.mission_name == 'no_name' or self.mission_name == '':
+         if self.mission_name == 'no_name' or self.mission_name == '' or self.mission_name == '$STR_MISSION_NAME':
              name = unquote(original_folder_name)
              name = name.translate(None, '";,*=-()&#/<>|').replace('__','_').replace(' ','_').split(".")[0].lower()
              self.mission_name = name
@@ -365,10 +370,7 @@ class Mission:
             return 'ERROR: Files cannot be found'
         except WindowsError:
             print 'warning: folder with the same name already exists or bad filename'
-            return 'ERROR: Possible duplicate mission'
-            """
-            FIND A WAY TO HANDLE DUPLICATES REGARDLESS OF HOW MANY THERE ARE
-            """    
+            return 'ERROR: Possible duplicate mission'  
             
     def mission_info(self):
          """ prints out mission info """
@@ -392,6 +394,7 @@ def arma_island_name_lookup(island):
     island_collection = {'thirskw' : 'Thirsk Winter',
                          'thirsk' : 'Thirsk', 
                          'chernarus_summer' : 'Chernarus summer',
+                         'utes' : 'Utes',
                          'bootcamp_acr' : 'Bukovina', 
                          'woodland_acr' : 'Bystrica', 
                          'afghan' : 'Afghanistan',
@@ -412,7 +415,9 @@ def arma_island_name_lookup(island):
                          'fdf_isle1_a' : 'Podagorsk',
                          'sara' : 'Sahrani',
                          'saralite' : 'South Sahrani',
-                         'sara_dbe1' : 'United Sahrani'}
+                         'sara_dbe1' : 'United Sahrani',
+                         'kunduz' : 'Kunduz',
+                         'isla_duala' : 'Isla Duala'}
     
     if island in island_collection:
         return island_collection[island]
@@ -422,9 +427,6 @@ def fetch(path):
     """ calls function to search for missions and then process them iteratively,
     copy files, rename folders, and write data to csv file """ 
     
-    #filenames = next(os.walk(path))[2]
-    #print filenames
-    #if "extract.bat" in filenames and "repack.bat" in filenames and "reset.bat" in filenames:
     fullpath = path  + "\\input"
         
     unpack_and_backup(path)
@@ -465,11 +467,9 @@ def fetch(path):
         
         # rename folder
         folder_name = folder_name.translate(None, '!#$:;*,"=-[]').rstrip('_')
-        if isinstance(folder_name, unicode) == False:             
-             folder_name_uni = normalize('NFC', folder_name.decode("utf-8")) 
-             rename_folder = mission.modify_folders(mis, fullpath + '\\' + folder_name_uni)                  
-        else:
-             rename_folder = mission.modify_folders(mis, fullpath + '\\' + folder_name)
+        folder_name = folder_name.decode('utf-8').lower()
+
+        rename_folder = mission.modify_folders(mis, fullpath + '\\' + folder_name)
         if rename_folder != 'Done':
              folder_name = folder_name + ' ' + rename_folder
         
@@ -480,10 +480,9 @@ def fetch(path):
             island = mission.island
             
         # insert entry in mission list csv
-        writer.writerow((mission.player_count, folder_name, mission.mission_des, mission.author, '', '', '', island.title(), original_folder_name))
+        writer.writerow((mission.player_count, folder_name.encode('utf-8'), mission.mission_des, mission.author, '', '', '', island.title(), original_folder_name))
     list_file.close()
     
-    clear_folder(path + '\\output')
     repack(path)
     
     
