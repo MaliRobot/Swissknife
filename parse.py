@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 import re, os, shutil, csv
 from urllib import unquote
@@ -156,6 +157,10 @@ class Mission:
                 if 'briefingname' in line.lower():
                     print 'briefing name erased in .ext!'
                     line = line.replace(line,'')
+                    
+                elif re.match(r'\s+maxPlayers[ ]{0,1}=', line):
+                    print 'QQQQQQQQQQQQQQQQQQQQ', line
+                    self.player_count = int(re.sub(r'[\D]', '', line))
                 
                 # checking mission name     
                 elif on_load_name_check.match(line):
@@ -318,18 +323,15 @@ class Mission:
                          addons = '@'
           
          # if mission name is not found in ext, look for mission name in file name                               
-         if self.mission_name == 'no_name' or self.mission_name == '' or self.mission_name == '$STR_MISSION_NAME':
+         if self.mission_name.lower() in set(['no_name','', '$str_mission_name', '$str_namemission']):
              name = unquote(original_folder_name)
              name = name.translate(None, '";,*=-()&#/<>|').replace('__','_').replace(' ','_').split(".")[0].lower()
-             self.mission_name = name
-             in_brackets = re.compile(r'\[(^)]*\)')
-             self.mission_name = re.sub(in_brackets, '', self.mission_name)
-             in_brackets_sq = re.compile(r'\[[^)]*\]')
-             self.mission_name = re.sub(in_brackets_sq, '', self.mission_name)
-             self.mission_name = self.mission_name.rstrip('_')
+             name = re.sub(r'\[(^)]*\)', '', name)
+             name = re.sub(r'\[[^)]*\]', '', name)
+             self.mission_name = name.rstrip('_')
          # this check is to get rid of repetition of player count and mission type
-         self.mission_name = re.sub(r'co[\W]{0,1}[0-9]{1,2}', '', self.mission_name)
-         self.mission_name = re.sub(r'coop[\W]{0,1}[0-9]{1,4}', '', self.mission_name)
+         self.mission_name = re.sub(r'c[oop\W]{0,3}[_][0-9]{1,2}[_][0-9]{0,2}', '', self.mission_name)
+         self.mission_name = re.sub(r'c[oop\W]{0,3}[_]{0,1}[0-9]{1,4}[_]', '', self.mission_name)
          self.mission_name = re.sub(r'(.+?)\1+', r'\1', self.mission_name)
          
          if self.mission_name[0:4] == game_type + player_count: 
@@ -346,7 +348,7 @@ class Mission:
              else: 
                 folder_name = game_type, str(addons), '_', self.mission_name, '.', self.island
          else:                 
-             folder_name = game_type, str(addons), player_count, '_', self.mission_name, '.', self.island # '.pbo' not needed, Osku's Tool adds .pbo   
+             folder_name = game_type, str(addons), player_count, '_', self.mission_name, '.', self.island  
          
          # final checks - removal of unwanted characters and repetitions (co, sp, etc.)
          folder_name = ''.join(folder_name)
