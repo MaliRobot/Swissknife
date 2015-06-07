@@ -368,7 +368,10 @@ class Mission:
         """ rename folder, warn if duplicate """  
         print original_name, folder_name           
         try:
-            os.rename(original_name, folder_name) 
+            os.rename(original_name, folder_name.decode('ascii','ignore').encode("windows-1252"))
+            return 'Done'
+        except UnicodeEncodeError:
+            os.rename(original_name, folder_name.encode('utf-8'))
             return 'Done'
         except NameError:
             print 'warning: required files are not found'
@@ -484,7 +487,7 @@ def fetch(path):
         else:
             island = mission.island
             
-        done = repack(path, folder_name)
+        done = repack(path, folder_name.decode('ascii','ignore').encode("windows-1252"))
             
         # insert entry in mission list csv
         if done == False:
