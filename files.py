@@ -30,6 +30,8 @@ def unpack_and_backup(path):
     
     check_make(input_path, backup_path, output)
     
+    clear_folder(output)
+    
     missions = [] 
     for dirpath, subdirs, files in os.walk(input_path):
         missions.append(files)
@@ -50,26 +52,28 @@ def unpack_and_backup(path):
 # debugging       
 #unpack_and_backup(path)
         
-def repack(path):
-
+def repack(path, folder_name):
+    
     input_path = path + "\\input"
     output = path + "\\output"
     cpbo_path = path + "\\cpbo\\cpbo.exe"
     
-    check_make(input_path, output)
+    check_make(output)
     
-    missions = [] 
-    for item in os.listdir(input_path):
-        if os.path.isdir(os.path.join(input_path, item)):
-            missions.append(item)
-
-    clear_folder(output)
-
-    for f in missions:
-        path = input_path + '\\' + str(f)
-        p = Popen([cpbo_path, "-y", "-p", path])
+    mission_path = input_path + '\\' + folder_name
+    
+    try:
+        p = Popen([cpbo_path, "-y", "-p", mission_path])
         p.wait()
-        move(path + '.pbo', output)
+        if os.path.isfile(mission_path + '.pbo') == True:
+            move(str(mission_path) + '.pbo', output)
+            return True
+        return False
+    except UnicodeError:
+        print 'Cpbo cannot handle filename'
+    return False
+
+    
 
 # debugging        
 #repack(path)

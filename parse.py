@@ -2,7 +2,6 @@
 
 import re, os, shutil, csv
 from urllib import unquote
-from subprocess import Popen
 from files import *
 
 class Mission:
@@ -69,62 +68,59 @@ class Mission:
                     print 'addons: ', self.addons_on 
                 elif '};' in line:
                     watch_for_addons = False
-                elif '"a3_map_altis"' in line:
-                    self.island = 'altis'
-                elif '"a3_map_stratis"' in line:
-                    self.island = 'stratis'
-                elif '"thirskw"' in line:
-                    self.island = 'thirskw'
-                elif all_in_arma_island.match(line):
-                    if self.island == 'unknown_island':
-                        self.island = line.replace('"aia_','').replace('_config"','').strip().rstrip(',')
-                        if self.island != 'saralite' or self.island != 'sara_dbe1' or self.island == 'sara':
-                            self.island = 'unknown_island'
-                elif '"bootcamp_acr"' in line:
-                    self.island = 'bootcamp_acr'
-                elif '"smd_sahrani_a2"' in line:
-                    self.island = 'smd_sahrani_a2'
-                elif '"woodland_acr"' in line:
-                    self.island = 'woodland_acr'
-                elif '"pja305"' in line:
-                    self.island = 'n\'ziwasogo'
-                elif '"map_vr"' in line:
-                    self.island = 'vr'
-                elif '"mcn_hazarkot"' in line:
-                    self.island = 'mcn_hazarkot'
-                elif '"fata"' in line:
-                    self.island = 'fata'
-                elif '"utes"' in line:
-                    self.island = 'utes'
-                elif '"pra_3"' in line:
-                    self.island = 'kunduz'
-                elif '"a3_map_isladuala3"' in line:
-                    self.island = 'isla_duala'
-                elif '"panovo_island"' in line:
-                    self.island = 'panovo'
-                elif '"colleville_island"' in line:
-                    self.island = 'colleville'
-                elif '"baranow_island"' in line:
-                    self.island = 'baranow'
-                elif '"ivachev_island"' in line:
-                    self.island = 'ivachev'
-                elif '"staszow_island"' in line:
-                    self.island = 'staszow'
-                elif watch_for_addons == True and self.addons_on == False:  
-                    if ('"a3_') not in line and ('"A3_') not in line:
-                        if '{' not in line: 
-                            self.addons_on = True
+                elif watch_for_addons == True and '{' not in line:
+                    if '"a3_map_altis"' in line:
+                        self.island = 'altis'
+                    elif '"a3_map_stratis"' in line:
+                        self.island = 'stratis'
+                    elif '"thirskw"' in line:
+                        self.island = 'thirskw'
+                    elif all_in_arma_island.match(line):
+                        if self.island == 'unknown_island':
+                            self.island = line.replace('"aia_','').replace('_config"','').strip().rstrip(',')
+                            if self.island != 'saralite' or self.island != 'sara_dbe1' or self.island == 'sara':
+                                self.island = 'unknown_island'
+                    elif '"bootcamp_acr"' in line:
+                        self.island = 'bootcamp_acr'
+                    elif '"smd_sahrani_a2"' in line:
+                        self.island = 'smd_sahrani_a2'
+                    elif '"woodland_acr"' in line:
+                        self.island = 'woodland_acr'
+                    elif '"pja305"' in line:
+                        self.island = 'n\'ziwasogo'
+                    elif '"map_vr"' in line:
+                        self.island = 'vr'
+                    elif '"mcn_hazarkot"' in line:
+                        self.island = 'mcn_hazarkot'
+                    elif '"fata"' in line:
+                        self.island = 'fata'
+                    elif '"utes"' in line:
+                        self.island = 'utes'
+                    elif '"pra_3"' in line:
+                        self.island = 'kunduz'
+                    elif '"a3_map_isladuala3"' in line:
+                        self.island = 'isla_duala'
+                    elif '"panovo_island"' in line:
+                        self.island = 'panovo'
+                    elif '"colleville_island"' in line:
+                        self.island = 'colleville'
+                    elif '"baranow_island"' in line:
+                        self.island = 'baranow'
+                    elif '"ivachev_island"' in line:
+                        self.island = 'ivachev'
+                    elif '"staszow_island"' in line:
+                        self.island = 'staszow'
+                    if self.addons_on == False:  
+                        if ('a3_') not in line and ('A3_') not in line:
+                            self.addons_on = True 
                             
                 # check if mission description is inside sqm
                 elif overview_text_check.match(line):
                     des = line.split("=")[1].split(";")[0]
                     self.mission_des = self.mission_description(des)
-                    print 'mission description is ', self.mission_des 
+                    print 'mission description is ', self.mission_des
                                          
                 outfile.write(line)
-                
-         #if (self.island != 'altis' or self.island != 'stratis') and self.addons_on == False:
-         #    self.addons_on = True
                 
          infile.close()
          outfile.close()
@@ -157,10 +153,11 @@ class Mission:
                 if 'briefingname' in line.lower():
                     print 'briefing name erased in .ext!'
                     line = line.replace(line,'')
-                    
-                elif re.match(r'\s+maxPlayers[ ]{0,1}=', line):
-                    print 'QQQQQQQQQQQQQQQQQQQQ', line
-                    self.player_count = int(re.sub(r'[\D]', '', line))
+                
+                # we can get the number of players from the Header class, 
+                # maxPlayers parameter, but it is not reliable mathod        
+                #elif re.match(r'\s+maxPlayers[ ]{0,1}=', line):
+                #    self.player_count = int(re.sub(r'[\D]', '', line))
                 
                 # checking mission name     
                 elif on_load_name_check.match(line):
@@ -321,18 +318,24 @@ class Mission:
                      if self.addons_on == False:
                          self.addons_on = True
                          addons = '@'
+         self.mission_name = self.mission_name.decode('ascii','ignore').encode("windows-1252") 
           
          # if mission name is not found in ext, look for mission name in file name                               
-         if self.mission_name.lower() in set(['no_name','', '$str_mission_name', '$str_namemission']):
+         if self.mission_name.lower() in set(['no_name','', '$str_mission_name', '$str_namemission', '$str_loadtitle', '_']):
              name = unquote(original_folder_name)
-             name = name.translate(None, '";,*=-()&#/<>|').replace('__','_').replace(' ','_').split(".")[0].lower()
+             name = name.translate(None, '";,*=-()&#/<>|').replace('__','_').replace(' ','_')
+             name = ''.join([x.lower() for x in name.split(".")[:-1]])
              name = re.sub(r'\[(^)]*\)', '', name)
              name = re.sub(r'\[[^)]*\]', '', name)
-             self.mission_name = name.rstrip('_')
+             self.mission_name = name
          # this check is to get rid of repetition of player count and mission type
-         self.mission_name = re.sub(r'c[oop\W]{0,3}[_][0-9]{1,2}[_][0-9]{0,2}', '', self.mission_name)
-         self.mission_name = re.sub(r'c[oop\W]{0,3}[_]{0,1}[0-9]{1,4}[_]', '', self.mission_name)
-         self.mission_name = re.sub(r'(.+?)\1+', r'\1', self.mission_name)
+         self.mission_name = re.sub(r'[_]{0,1}c[oop\W]{0,4}[_][0-9]{1,2}[_][0-9]{0,2}', '', self.mission_name)
+         self.mission_name = re.sub(r'[_]{0,1}c[oop\W]{0,4}[_]{0,1}[0-9]{1,4}[_]', '', self.mission_name)
+         self.mission_name = re.sub(r'[_]{0,1}c[oop\W]{2,4}[0-9]{1,4}[_]{0,1}', '', self.mission_name)
+         self.mission_name = re.sub(r'_sp_', '', self.mission_name)
+         #self.mission_name = re.sub(r'(.+?)\1+', r'\1', self.mission_name)
+         self.mission_name = re.sub(r'spco[o]{0,1}p_', '', self.mission_name)
+         self.mission_name = self.mission_name.strip('_')
          
          if self.mission_name[0:4] == game_type + player_count: 
              self.mission_name = self.mission_name[5:]
@@ -365,11 +368,11 @@ class Mission:
         """ rename folder, warn if duplicate """  
         print original_name, folder_name           
         try:
-            os.rename(original_name, folder_name)
+            os.rename(original_name, folder_name) 
             return 'Done'
         except NameError:
             print 'warning: required files are not found'
-            return 'ERROR: Files cannot be found'
+            return 'ERROR: Folder cannot be found'
         except WindowsError:
             print 'warning: folder with the same name already exists or bad filename'
             return 'ERROR: Possible duplicate mission'  
@@ -469,7 +472,7 @@ def fetch(path):
         
         # rename folder
         folder_name = folder_name.translate(None, '!#$:;*,"=-[]').rstrip('_')
-        folder_name = folder_name.decode('utf-8').lower()
+        folder_name = folder_name.lower()
 
         rename_folder = mission.modify_folders(mis, fullpath + '\\' + folder_name)
         if rename_folder != 'Done':
@@ -481,13 +484,23 @@ def fetch(path):
         else:
             island = mission.island
             
+        done = repack(path, folder_name)
+            
         # insert entry in mission list csv
-        writer.writerow((mission.player_count, folder_name.encode('utf-8'), mission.mission_des, mission.author, '', '', '', island.title(), original_folder_name))
+        if done == False:
+            folder_name = 'ERROR_REPACKING ' + folder_name
+            
+        #writer.writerow((mission.player_count, folder_name.encode('utf-8'), mission.mission_des, mission.author, '', '', '', island.title(), original_folder_name))
+        try:
+            writer.writerow((mission.player_count, folder_name.decode('ascii','ignore').encode("windows-1252"), mission.mission_des, mission.author, '', '', '', island.title(), original_folder_name))
+        except UnicodeEncodeError:
+            writer.writerow((mission.player_count, folder_name.encode('utf-8'), mission.mission_des, mission.author, '', '', '', island.title(), original_folder_name))
     list_file.close()
     
-    repack(path)
+    #repack(path)
     
-    
+# if you need this script as standalone uncomment this
+
 #if __name__ == "__main__":
 #    # hardcoded fullpath for testing purposes
 #    fullpath = os.getcwd()
