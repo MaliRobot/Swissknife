@@ -33,12 +33,32 @@ class Mission:
          self.mission_des = ''
          self.mission_name = 'no_name'
          self.author = 'unknown_author'
-         
+    
     def examine_sqm(self):
          """ Search through sqm file to look for number of players, find out if 
          mission uses addons, erase briefing info parameter and get mission 
          description if it's there """
-
+        
+         island_dict = {'"a3_map_altis"': "altis",
+                        '"a3_map_stratis"': "stratis",
+                        '"thirskw"' : "thirskw",
+                        '"bootcamp_acr"' : "bootcamp_acr",
+                        '"smd_sahrani_a2"': "smd_sahrani_a2",
+                        '"woodland_acr"': 'woodland_acr',
+                        '"pja305"': 'n\'ziwasogo',
+                        '"vr"' : 'vr',
+                        '"mcn_hazarkot"': 'mcn_hazarkot',
+                        '"fata"' :'fata',
+                        '"utes"' : 'utes',
+                        '"pra_3"' : 'kunduz',
+                        '"a3_map_isladuala3"' : 'isla_duala',
+                        '"panovo_island"' : 'panovo',
+                        '"colleville_island"' : 'colleville',
+                        '"baranow_island"': 'baranow',
+                        '"ivachev_island"':'ivachev',
+                        '"staszow_island"' : 'staszow'
+                        }        
+        
          if self.sqm_file == {}:
              return None
          
@@ -69,47 +89,14 @@ class Mission:
                 elif '};' in line:
                     watch_for_addons = False
                 elif watch_for_addons == True and '{' not in line:
-                    if '"a3_map_altis"' in line:
-                        self.island = 'altis'
-                    elif '"a3_map_stratis"' in line:
-                        self.island = 'stratis'
-                    elif '"thirskw"' in line:
-                        self.island = 'thirskw'
+                    guess = line.strip()[:-1]
+                    if guess in island_dict.keys():
+                        self.island = island_dict[guess]
                     elif all_in_arma_island.match(line):
                         if self.island == 'unknown_island':
                             self.island = line.replace('"aia_','').replace('_config"','').strip().rstrip(',')
                             if self.island != 'saralite' or self.island != 'sara_dbe1' or self.island == 'sara':
                                 self.island = 'unknown_island'
-                    elif '"bootcamp_acr"' in line:
-                        self.island = 'bootcamp_acr'
-                    elif '"smd_sahrani_a2"' in line:
-                        self.island = 'smd_sahrani_a2'
-                    elif '"woodland_acr"' in line:
-                        self.island = 'woodland_acr'
-                    elif '"pja305"' in line:
-                        self.island = 'n\'ziwasogo'
-                    elif '"map_vr"' in line:
-                        self.island = 'vr'
-                    elif '"mcn_hazarkot"' in line:
-                        self.island = 'mcn_hazarkot'
-                    elif '"fata"' in line:
-                        self.island = 'fata'
-                    elif '"utes"' in line:
-                        self.island = 'utes'
-                    elif '"pra_3"' in line:
-                        self.island = 'kunduz'
-                    elif '"a3_map_isladuala3"' in line:
-                        self.island = 'isla_duala'
-                    elif '"panovo_island"' in line:
-                        self.island = 'panovo'
-                    elif '"colleville_island"' in line:
-                        self.island = 'colleville'
-                    elif '"baranow_island"' in line:
-                        self.island = 'baranow'
-                    elif '"ivachev_island"' in line:
-                        self.island = 'ivachev'
-                    elif '"staszow_island"' in line:
-                        self.island = 'staszow'
                     if self.addons_on == False:  
                         if ('a3_') not in line and ('A3_') not in line:
                             self.addons_on = True 
@@ -492,6 +479,11 @@ def fetch(path):
         # insert entry in mission list csv
         if done == False:
             folder_name = 'ERROR_REPACKING ' + folder_name
+            
+        # this should be commented out for debugging, otherwise we keep it
+        # so that csv won't get spammed with 'unknow_author' strings
+        if mission.author == 'unknown_author':
+            mission.author = ''
             
         #writer.writerow((mission.player_count, folder_name.encode('utf-8'), mission.mission_des, mission.author, '', '', '', island.title(), original_folder_name))
         try:
