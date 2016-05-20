@@ -4,11 +4,45 @@ import re, os, shutil, csv
 from urllib import unquote
 from files import *
 
+ISLANDS_DICT = {'"a3_map_altis"': "altis",
+            '"a3_map_stratis"': "stratis",
+            '"thirskw"' : "thirskw",
+            '"bootcamp_acr"' : "bootcamp_acr",
+            '"smd_sahrani_a2"': "smd_sahrani_a2",
+            '"woodland_acr"': 'woodland_acr',
+            '"pja305"': 'n\'ziwasogo',
+            '"vr"' : 'vr',
+            '"mcn_hazarkot"': 'mcn_hazarkot',
+            '"fata"' :'fata',
+            '"utes"' : 'utes',
+            '"pra_3"' : 'kunduz',
+            '"a3_map_isladuala3"' : 'isla_duala',
+            '"panovo_island"' : 'panovo',
+            '"colleville_island"' : 'colleville',
+            '"baranow_island"': 'baranow',
+            '"ivachev_island"':'ivachev',
+            '"staszow_island"' : 'staszow'
+            } 
+            
+ISLANDS = ['chernarus', 'utes', 'zargabad', 'takistan', 'bystrica', 
+         'bukovina', 'shapur', 'desert', 'sahrani', 'imrali', 'thirskw', 
+         'thirsk', 'namalsk', 'fallujah', 'lingor', 'clafghan', 'rahmadi', 
+         'southern_sahrani', 'united_sahrani', 'porto', 'takistan_mountains',
+         'mountains_acr', 'chernarus_summer', 'proving_grounds', 'n\'ziwasogo', 
+         'praa_av', 'fdf_isle1_a', 'provinggrounds_pmc', 'staszow', 'panovo', 
+         'colleville', 'baranow', 'ivachev', 'sara', 'saralite', 'sara_dbe1', 
+         'afghanistan', 'vr', 'kunduz', 'isla_duala'] 
+            
+GAME_TYPES = ['coop','dm','tdm','ctf','sc','cti','rpg','seize','defend',
+              'zdm','zctf','zcoop','zsc','zcti','ztdm','zrpg','zgm','zvz','zvp', 'sp']
+              
+
 class Mission:
     """ Class to store and process mission data and mission files. """
     def __init__(self, path):
          self.directory = path
          self.sqm_file = {}
+         self.cpp_file = {}
          self.ext_file = {}
          self.btc_file = {}
          self.far_file = {}
@@ -16,6 +50,8 @@ class Mission:
             for f in files:
                 if f.endswith(".sqm"):
                     self.sqm_file[os.path.join(dirpath, f)] = os.path.basename(f)
+                elif f.endswith(".cpp"):
+                    self.cpp_file[os.path.join(dirpath, f)] = os.path.basename(f)
                 elif f.endswith(".ext"):
                     self.ext_file[os.path.join(dirpath, f)] = os.path.basename(f)
                 elif f == '=BTC=_revive_init.sqf':
@@ -38,26 +74,6 @@ class Mission:
          """ Search through sqm file to look for number of players, find out if 
          mission uses addons, erase briefing info parameter and get mission 
          description if it's there """
-        
-         island_dict = {'"a3_map_altis"': "altis",
-                        '"a3_map_stratis"': "stratis",
-                        '"thirskw"' : "thirskw",
-                        '"bootcamp_acr"' : "bootcamp_acr",
-                        '"smd_sahrani_a2"': "smd_sahrani_a2",
-                        '"woodland_acr"': 'woodland_acr',
-                        '"pja305"': 'n\'ziwasogo',
-                        '"vr"' : 'vr',
-                        '"mcn_hazarkot"': 'mcn_hazarkot',
-                        '"fata"' :'fata',
-                        '"utes"' : 'utes',
-                        '"pra_3"' : 'kunduz',
-                        '"a3_map_isladuala3"' : 'isla_duala',
-                        '"panovo_island"' : 'panovo',
-                        '"colleville_island"' : 'colleville',
-                        '"baranow_island"': 'baranow',
-                        '"ivachev_island"':'ivachev',
-                        '"staszow_island"' : 'staszow'
-                        }        
         
          if self.sqm_file == {}:
              return None
@@ -90,15 +106,15 @@ class Mission:
                     watch_for_addons = False
                 elif watch_for_addons == True and '{' not in line:
                     guess = line.strip()[:-1]
-                    if guess in island_dict.keys():
-                        self.island = island_dict[guess]
+                    if guess in ISLANDS_DICT.keys():
+                        self.island = ISLANDS_DICT[guess]
                     elif all_in_arma_island.match(line):
                         if self.island == 'unknown_island':
                             self.island = line.replace('"aia_','').replace('_config"','').strip().rstrip(',')
                             if self.island != 'saralite' or self.island != 'sara_dbe1' or self.island == 'sara':
                                 self.island = 'unknown_island'
                     if self.addons_on == False:  
-                        if ('a3_') not in line and ('A3_') not in line:
+                        if ('a3_') not in line.lower():
                             self.addons_on = True 
                             
                 # check if mission description is inside sqm
@@ -114,6 +130,42 @@ class Mission:
          sqm_data = [self.player_count, self.island, self.addons_on]              
          return [sqm_data, new_sqm]
          
+    def examine_cpp(self):
+         """
+         """
+         if self.cpp_file == {}:
+            return None
+            
+         new_sqm = 'new_sqm.sqm'
+         self.player_count = 0
+        
+         infile = open(self.cpp_file.keys()[0], 'r')
+         outfile = open(new_sqm, 'w')
+
+         look_players = False         
+         
+         for line in infile:
+             if 'isPlayable = 1;' in line:
+                 look_players = True
+             if look_players == True and 'spectator' in line.lower():
+                 look_players = False
+             if 'class' in line and look_players == True: 
+                 self.player_count += 1
+                 look_players = False
+             if line.startswith('addons[]'):
+                 addons = re.findall('{(.*?)}', line)
+                 for addon in addons:
+                     if addon in ISLANDS_DICT.keys():
+                         self.island = ISLANDS_DICT[addon]
+                     elif not addon.lower().startswith('a3_'):
+                         self.addons_on = True
+             outfile.write(line)
+             
+         infile.close()
+         outfile.close()
+         cpp_data = [self.player_count, self.island, self.addons_on]              
+         return [cpp_data, new_sqm]
+         
     def examine_ext(self):
          """ Method to handle data from ext file, erase briefing name, set 
          respawn to group, find game type, mission name, description, 
@@ -121,14 +173,11 @@ class Mission:
          
          if self.ext_file == {}:
              return None
-         
-         game_types = ['coop','dm','tdm','ctf','sc','cti','rpg','seize','defend',
-         'zdm','zctf','zcoop','zsc','zcti','ztdm','zrpg','zgm','zvz','zvp', 'sp']
         
-         respawn_check = re.compile('respawn[ =]', re.IGNORECASE)
-         on_load_name_check = re.compile('onLoadName[ =]', re.IGNORECASE)
-         on_load_mission_check = re.compile('onLoadMission[ =]', re.IGNORECASE)
-         overview_text_check = re.compile('overviewText[ =]', re.IGNORECASE)
+         respawn_check = re.compile('respawn[ ]=', re.IGNORECASE)
+         on_load_name_check = re.compile('onLoadName[ ]=', re.IGNORECASE)
+         on_load_mission_check = re.compile('onLoadMission[ ]=', re.IGNORECASE)
+         overview_text_check = re.compile('overviewText[ ]=', re.IGNORECASE)
          
          new_ext = 'new_ext.ext'
          infile = open(self.ext_file.keys()[0], 'r')
@@ -173,7 +222,7 @@ class Mission:
                 # checking game type        
                 elif "gametype =" in line.lower():
                     print 'checking game type'
-                    for game in game_types:
+                    for game in GAME_TYPES:
                         if game in line.lower():
                             self.game_type = game
                             print 'game type is: ', game
@@ -266,15 +315,6 @@ class Mission:
          
     def folder_name(self, original_folder_name):
          """ generate new folder name from the acquired data """
-         
-         islands = ['chernarus', 'utes', 'zargabad', 'takistan', 'bystrica', 
-         'bukovina', 'shapur', 'desert', 'sahrani', 'imrali', 'thirskw', 
-         'thirsk', 'namalsk', 'fallujah', 'lingor', 'clafghan', 'rahmadi', 
-         'southern_sahrani', 'united_sahrani', 'porto', 'takistan_mountains',
-         'mountains_acr', 'chernarus_summer', 'proving_grounds', 'n\'ziwasogo', 
-         'praa_av', 'fdf_isle1_a', 'provinggrounds_pmc', 'staszow', 'panovo', 
-         'colleville', 'baranow', 'ivachev', 'sara', 'saralite', 'sara_dbe1', 
-         'afghanistan', 'vr', 'kunduz', 'isla_duala'] 
             
          game_type = self.game_type[:2]
          
@@ -299,7 +339,7 @@ class Mission:
          
          # if island is not found in mission files, try looking in filename
          if self.island == 'unknown_island':
-             for island in islands:
+             for island in ISLANDS:
                  if island in original_folder_name.lower():
                      self.island = island
                      if self.addons_on == False:
@@ -330,6 +370,9 @@ class Mission:
              self.mission_name = self.mission_name[6:]
                  
          print 'name from filename is ', self.mission_name
+         
+         if self.island == None:
+             self.island = ''
             
          # make new folder name using data found in files
          if game_type == 'sp':
@@ -425,7 +468,7 @@ def fetch(path):
     fullpath = path  + "\\input"
         
     unpack_and_backup(path)
-                
+
     list_file = open('new_missions_list.csv', 'wb')
     writer = csv.writer(list_file)
     
@@ -438,6 +481,7 @@ def fetch(path):
 
         # start processing
         sqm = mission.examine_sqm()
+        cpp = mission.examine_cpp()
         ext = mission.examine_ext()
         btc = mission.examine_btc()
         far = mission.examine_far()
@@ -450,6 +494,9 @@ def fetch(path):
         # copy all files
         if sqm:
             mission.copy_and_replace(mis + '\\mission.sqm', sqm[1])
+        
+        if cpp:
+            mission.copy_and_replace(mis + '\\mission.cpp', cpp[1])        
         
         if ext:
             mission.copy_and_replace(mis + '\\description.ext', ext[1])
