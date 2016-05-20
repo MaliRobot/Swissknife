@@ -60,3 +60,10 @@ dist/swissknife.exe
 name=swissknife.spec
 swissknife.spec
 dist/new_missions_list.csv
+
+# files and folders included in Swissknife working folder
+cpbo.exe
+unRap.exe
+_backup_
+input
+output
