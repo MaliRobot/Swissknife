@@ -19,9 +19,11 @@ ISLANDS_DICT = {'"a3_map_altis"': "altis",
             '"a3_map_isladuala3"' : 'isla_duala',
             '"panovo_island"' : 'panovo',
             '"colleville_island"' : 'colleville',
+            '"mcn_aliabad"' : 'mcn_aliabad',
             '"baranow_island"': 'baranow',
             '"ivachev_island"':'ivachev',
-            '"staszow_island"' : 'staszow'
+            '"staszow_island"' : 'staszow',
+            '"panthera"' : 'panthera'
             } 
             
 ISLANDS = ['chernarus', 'utes', 'zargabad', 'takistan', 'bystrica', 
@@ -31,7 +33,8 @@ ISLANDS = ['chernarus', 'utes', 'zargabad', 'takistan', 'bystrica',
          'mountains_acr', 'chernarus_summer', 'proving_grounds', 'n\'ziwasogo', 
          'praa_av', 'fdf_isle1_a', 'provinggrounds_pmc', 'staszow', 'panovo', 
          'colleville', 'baranow', 'ivachev', 'sara', 'saralite', 'sara_dbe1', 
-         'afghanistan', 'vr', 'kunduz', 'isla_duala'] 
+         'afghanistan', 'kunduz', 'isla_duala', 'abramia', 'aliabad',
+         'panthera', 'vt5', 'vr', 'altis', 'stratis', 'woodland_acr'] 
             
 GAME_TYPES = ['coop','dm','tdm','ctf','sc','cti','rpg','seize','defend',
               'zdm','zctf','zcoop','zsc','zcti','ztdm','zrpg','zgm','zvz','zvp', 'sp']
@@ -50,7 +53,7 @@ class Mission:
             for f in files:
                 if f.endswith(".sqm"):
                     self.sqm_file[os.path.join(dirpath, f)] = os.path.basename(f)
-                elif f.endswith(".cpp"):
+                elif f == "mission.cpp":
                     self.cpp_file[os.path.join(dirpath, f)] = os.path.basename(f)
                 elif f.endswith(".ext"):
                     self.ext_file[os.path.join(dirpath, f)] = os.path.basename(f)
@@ -77,7 +80,7 @@ class Mission:
         
          if self.sqm_file == {}:
              return None
-         
+
          watch_for_addons = False
          new_sqm = 'new_sqm.sqm'
          
@@ -88,42 +91,47 @@ class Mission:
          outfile = open(new_sqm, 'w')
          
          for line in infile:
-                # erasing briefing name
-                if re.findall(r'briefingName=\"(.+?)\"', line) != []:
-                    print 'briefing name erased in .sqm!'
-                    line = re.sub(r'briefingName=\"(.+?)\"', 'briefingName=""', line)
-                    
-                # counting number of players
-                elif 'player="' in line:
-                    print 'counting players', self.player_count
-                    self.player_count +=1
-                    
-                # checking addons and island
-                elif ('addOns[]=' in line or 'addOnsAuto[]=' in line) and self.addons_on == False:
-                    watch_for_addons = True
-                    print 'addons: ', self.addons_on 
-                elif '};' in line:
-                    watch_for_addons = False
-                elif watch_for_addons == True and '{' not in line:
-                    guess = line.strip()[:-1]
-                    if guess in ISLANDS_DICT.keys():
-                        self.island = ISLANDS_DICT[guess]
-                    elif all_in_arma_island.match(line):
-                        if self.island == 'unknown_island':
-                            self.island = line.replace('"aia_','').replace('_config"','').strip().rstrip(',')
-                            if self.island != 'saralite' or self.island != 'sara_dbe1' or self.island == 'sara':
-                                self.island = 'unknown_island'
-                    if self.addons_on == False:  
-                        if ('a3_') not in line.lower():
-                            self.addons_on = True 
-                            
-                # check if mission description is inside sqm
-                elif overview_text_check.match(line):
-                    des = line.split("=")[1].split(";")[0]
-                    self.mission_des = self.mission_description(des)
-                    print 'mission description is ', self.mission_des
-                                         
-                outfile.write(line)
+             line = line.lower()
+             # erasing briefing name
+             if re.findall(r'briefingName=\"(.+?)\"', line) != []:
+                 print 'briefing name erased in .sqm!'
+                 line = re.sub(r'briefingName=\"(.+?)\"', 'briefingName=""', line)
+                
+             # counting number of players
+             elif 'player="' in line.strip() or 'isplayable=1' in line.strip():
+                 print 'counting players', self.player_count
+                 self.player_count +=1
+                
+             # checking addons and island
+             elif ('addons[]=' in line or 'addonsauto[]=' in line) and self.addons_on == False:
+                 watch_for_addons = True
+                 print 'addons: ', self.addons_on 
+             elif '};' in line:
+                 watch_for_addons = False
+             elif '{' in line:
+                 pass
+             elif watch_for_addons == True and '{' not in line:
+                 guess = line.strip()[:-1]
+                 if guess in ISLANDS_DICT.keys():
+                     self.island = ISLANDS_DICT[guess]
+                 elif all_in_arma_island.match(line):
+                     if self.island == 'unknown_island':
+                         self.island = line.replace('"aia_','').replace('_config"','').strip().rstrip(',')
+                         if self.island != 'saralite' or self.island != 'sara_dbe1' or self.island == 'sara':
+                             self.island = 'unknown_island'
+                 if self.addons_on == False:  
+                     if 'a3_' in line or 'map_vr' in line:
+                         pass
+                     else:
+                         self.addons_on = True 
+                        
+             # check if mission description is inside sqm
+             elif overview_text_check.match(line):
+                 des = line.split("=")[1].split(";")[0]
+                 self.mission_des = self.mission_description(des)
+                 print 'mission description is ', self.mission_des
+                                     
+             outfile.write(line)
                 
          infile.close()
          outfile.close()
@@ -132,12 +140,12 @@ class Mission:
          
     def examine_cpp(self):
          """
-         """
+         """      
          if self.cpp_file == {}:
             return None
             
          new_sqm = 'new_sqm.sqm'
-         self.player_count = 0
+#         self.player_count = 0
         
          infile = open(self.cpp_file.keys()[0], 'r')
          outfile = open(new_sqm, 'w')
@@ -154,6 +162,7 @@ class Mission:
                  look_players = False
              if line.startswith('addons[]'):
                  addons = re.findall('{(.*?)}', line)
+
                  for addon in addons:
                      if addon in ISLANDS_DICT.keys():
                          self.island = ISLANDS_DICT[addon]
@@ -163,6 +172,7 @@ class Mission:
              
          infile.close()
          outfile.close()
+
          cpp_data = [self.player_count, self.island, self.addons_on]              
          return [cpp_data, new_sqm]
          
@@ -342,7 +352,7 @@ class Mission:
              for island in ISLANDS:
                  if island in original_folder_name.lower():
                      self.island = island
-                     if self.addons_on == False:
+                     if self.addons_on == False and self.island not in ['altis', 'stratis', 'vr']:
                          self.addons_on = True
                          addons = '@'
          self.mission_name = self.mission_name.decode('ascii','ignore').encode("windows-1252") 
@@ -388,10 +398,13 @@ class Mission:
          folder_name = folder_name.rstrip('_').replace('__','_')
          return folder_name
          
-    def copy_and_replace(self, original_file, edit): 
+    def copy_and_replace(self, original_file, edit, cpp = False): 
         """ rename files in mission folder, erase originals, move copies """   
         os.remove(original_file)
-        shutil.copy(edit, original_file)
+        if cpp:
+            shutil.copy(edit, original_file[:-3] + '.sqm')
+        else:
+            shutil.copy(edit, original_file)
         os.remove(edit)  
      
     def modify_folders(self, original_name, folder_name):
@@ -444,6 +457,7 @@ def arma_island_name_lookup(island):
                          'mountains_acr' : 'Takistan Cutout',
                          'vr' : 'VR',
                          'mcn_hazarkot' : 'Hazar-Kot',
+                         'mcn_aliabad' : 'Aliabad',
                          'fata' : 'Fata',
                          'colleville_island' : 'Colleville',
                          'baranow' : 'Baranow',
@@ -455,7 +469,9 @@ def arma_island_name_lookup(island):
                          'saralite' : 'South Sahrani',
                          'sara_dbe1' : 'United Sahrani',
                          'kunduz' : 'Kunduz',
-                         'isla_duala' : 'Isla Duala'}
+                         'isla_duala' : 'Isla Duala',
+                         'panthera' : 'Panthera',
+                         'vt5' : 'VT5'}
     
     if island in island_collection:
         return island_collection[island]
@@ -485,7 +501,7 @@ def fetch(path):
         ext = mission.examine_ext()
         btc = mission.examine_btc()
         far = mission.examine_far()
-        print sqm, ext, btc, far
+        print sqm, cpp, ext, btc, far
         
         # generate folder name
         folder_name = mission.folder_name(original_folder_name)    
@@ -496,7 +512,7 @@ def fetch(path):
             mission.copy_and_replace(mis + '\\mission.sqm', sqm[1])
         
         if cpp:
-            mission.copy_and_replace(mis + '\\mission.cpp', cpp[1])        
+            mission.copy_and_replace(mis + '\\mission.cpp', cpp[1], cpp = True)        
         
         if ext:
             mission.copy_and_replace(mis + '\\description.ext', ext[1])
@@ -538,8 +554,6 @@ def fetch(path):
         except UnicodeEncodeError:
             writer.writerow((mission.player_count, folder_name.encode('utf-8'), mission.mission_des, mission.author, '', '', '', island.title(), original_folder_name))
     list_file.close()
-    
-    #repack(path)
     
 # if you need this script as standalone uncomment this
 
