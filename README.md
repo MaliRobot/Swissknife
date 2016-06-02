@@ -1,19 +1,19 @@
 
 ##SWISSKNIFE
 
-###Swissknife - a modular tool made for CiA Arma gaming clan for formatting filenames according to CiA standard, extracting data, updating mission spreadsheet list and uploading missions to a server.
+####Swissknife - a modular tool made for CiA Arma gaming clan for formatting filenames according to CiA standard, extracting data, updating mission spreadsheet list and uploading missions to a server.
 
-###Features: 
+#####Features: 
 - process mission files and make them CiA server ready (change parameters and format filename)
 - make a spreadsheet containing info on processed missions (extract data on no. of players, mission name, description, island and usage of addons)
 
-###Requirements:
+#####Requirements:
 1. cpbo.exe - from ArmaTools: http://www.armaholic.com/page.php?id=411
 2. unRap.exe - you can't get it from UnBuildArma package: http://www.armaholic.com/page.php?id=3320
 
 I reccomend to make a single exe file if you using the program in Windows. Pyinstaller params: pyinstaller --onefile --i icon.ico main.py window.py files.py parse.py
 
-###Usage:
+#####Usage:
 Place exe in a folder of your choice. The folder where exe is needs to have structure like this (where everything else beside exe files is a folder):
    
 
@@ -56,7 +56,7 @@ After pressing the "Process" button, the program will start. You will see a cons
 
 It will create CSV file ready to be integrated in CiA mission spreadsheet. If it encounters duplicate file it will mark them in CSV as duplicates and such files will not be processed. You can also see all of the data that the program has extracted from the files. 
 
-###Latest version link:
+#####Latest version link:
 https://www.dropbox.com/s/scdalr9us17ragb/swissknife.7z?dl=0
 
 
