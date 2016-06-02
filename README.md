@@ -20,11 +20,11 @@ Place exe in a folder of your choice. The folder where exe is needs to have stru
 
 |- cpbo
 
-   |- cpbo.exe
+      |- cpbo.exe
    
 |- unrap
 
-   |- unrap.exe
+      |- unrap.exe
    
 
 This is only recommendation, though, if you are using gui Swissknife you can pass location of the missions to the program, but input, output, _backup_ has to be in a single directory which also includes cpbo directory which contains cpbo.exe and unrap directory with its respective exe.
