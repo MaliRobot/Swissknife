@@ -1,7 +1,7 @@
 
-SWISSKNIFE
+##SWISSKNIFE
 
-Swissknife - a modular tool made for CiA Arma gaming clan for formatting filenames according to CiA standard, extracting data, updating mission spreadsheet list and uploading missions to a server.
+###Swissknife - a modular tool made for CiA Arma gaming clan for formatting filenames according to CiA standard, extracting data, updating mission spreadsheet list and uploading missions to a server.
 
 Features: 
 - process mission files and make them CiA server ready (change parameters and format filename)
