@@ -4,11 +4,15 @@ Features:
 - process mission files and make them CiA server ready (change parameters and format filename)
 - make a spreadsheet containing info on processed missions (extract data on no. of players, mission name, description, island and usage of addons)
 
-I reccomend to make a single exe file if you using the program in Windows. Pyinstaller params: pyinstaller --onefile main.py window.py files.py parse.py
+Requirements:
+1. cpbo.exe - from ArmaTools: http://www.armaholic.com/page.php?id=411
+2. unRap.exe - you can't get it from UnBuildArma package: http://www.armaholic.com/page.php?id=3320
+
+I reccomend to make a single exe file if you using the program in Windows. Pyinstaller params: pyinstaller --onefile --i icon.ico main.py window.py files.py parse.py
 
 Usage:
 Place exe in a folder of your choice. The folder where exe is needs to have structure like this (where everything else beside exe files is a folder):
-  /main folder 
+   
 
      |- _backup_ 
 
