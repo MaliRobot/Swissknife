@@ -402,7 +402,7 @@ class Mission:
         """ rename files in mission folder, erase originals, move copies """   
         os.remove(original_file)
         if cpp:
-            shutil.copy(edit, original_file[:-3] + '.sqm')
+            shutil.copy(edit, original_file[:-3] + 'sqm')
         else:
             shutil.copy(edit, original_file)
         os.remove(edit)  
