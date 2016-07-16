@@ -45,25 +45,30 @@ def unpack_and_backup(path):
         print path
         p = Popen([cpbo_path, "-y", "-e", path])
         p.wait()
-        
+
         try:
             move(path, backup_path)
         except Exception as e:
             print e, ' file already present: ', path
-            os.remove(path)
             
         # now try to debinarize mission.sqm
-        path = path.replace('.pbo', '')
-        sqm_path = path + '\\' + 'mission.sqm'
+        folder_path = path.replace('.pbo', '')
+        sqm_path = folder_path + '\\' + 'mission.sqm'
         p = Popen([unrap_path, sqm_path], stdout=PIPE)
         p.wait()
-
-        # check if mission.sqm is binarized, replace mission.sqm with .cpp
-        output = [x for x in p.stdout.readlines()][-1]
-        if 'mission.cpp' in output:
-            move(os.getcwd() + '\\mission.cpp', path + '\\')
-            os.remove(sqm_path)    
+#
+#        # check if mission.sqm is binarized, replace mission.sqm with .cpp
+        try:
+            output = [x for x in p.stdout.readlines()][-1]
+            if 'mission.cpp' in output:
+                move(os.getcwd() + '\\mission.cpp', path)
+                os.remove(sqm_path)    
+        except IndexError:
+            print "unable to debinarize mission.sqm file of " + str(f) + 'mission'
+            os.remove(folder_path)
         
+        os.remove(path)            
+                    
 # debugging       
 #unpack_and_backup(path)
         

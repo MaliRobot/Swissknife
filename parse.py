@@ -77,10 +77,10 @@ class Mission:
          """ Search through sqm file to look for number of players, find out if 
          mission uses addons, erase briefing info parameter and get mission 
          description if it's there """
-        
+         
          if self.sqm_file == {}:
              return None
-
+         
          watch_for_addons = False
          new_sqm = 'new_sqm.sqm'
          
@@ -89,7 +89,7 @@ class Mission:
          
          infile = open(self.sqm_file.keys()[0], 'r')
          outfile = open(new_sqm, 'w')
-         
+
          for line in infile:
              line = line.lower()
              # erasing briefing name
@@ -140,35 +140,32 @@ class Mission:
          
     def examine_cpp(self):
          """
-         """      
+         """    
          if self.cpp_file == {}:
             return None
-            
+
          new_sqm = 'new_sqm.sqm'
 #         self.player_count = 0
         
          infile = open(self.cpp_file.keys()[0], 'r')
-         outfile = open(new_sqm, 'w')
-
-         look_players = False         
+         outfile = open(new_sqm, 'w')       
+     
+         addons = re.findall('addons\[\] = {(.*?)};', data)[0]
+         addons = addons.split(', ')
+         addons = [x.strip('"') for x in addons]
+         for addon in addons:
+             if addon.startswith('A3_') == False:
+                 self.addons_on = True
+             if addon in ISLANDS_DICT.keys():
+                 self.island = ISLANDS_DICT[addon]
+                 
+         players = data.count("isPlayable = 1;")
+         spectators = data.count('VirtualSpectator')
+         self.player_count = players - spectators
          
-         for line in infile:
-             if 'isPlayable = 1;' in line:
-                 look_players = True
-             if look_players == True and 'spectator' in line.lower():
-                 look_players = False
-             if 'class' in line and look_players == True: 
-                 self.player_count += 1
-                 look_players = False
-             if line.startswith('addons[]'):
-                 addons = re.findall('{(.*?)}', line)
-
-                 for addon in addons:
-                     if addon in ISLANDS_DICT.keys():
-                         self.island = ISLANDS_DICT[addon]
-                     elif not addon.lower().startswith('a3_'):
-                         self.addons_on = True
-             outfile.write(line)
+         print(players, addons_on, island)     
+         
+         outfile.write(data)
              
          infile.close()
          outfile.close()
@@ -236,6 +233,8 @@ class Mission:
                         if game in line.lower():
                             self.game_type = game
                             print 'game type is: ', game
+                            if game.lower() == 'coop':
+                                break
                 
                 # checking mission makers name
                 elif "author =" in line.lower() or "author=" in line.lower():
@@ -484,12 +483,13 @@ def fetch(path):
     fullpath = path  + "\\input"
         
     unpack_and_backup(path)
+    return 0
 
     list_file = open('new_missions_list.csv', 'wb')
     writer = csv.writer(list_file)
     
     start = find_folders(path + '\\' + 'input')
-
+    
     for mis in start:
         
         mission = Mission(mis)
