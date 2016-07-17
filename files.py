@@ -65,7 +65,6 @@ def unpack_and_backup(path):
                 os.remove(sqm_path)    
         except IndexError:
             print "unable to debinarize mission.sqm file of " + str(f) + 'mission'
-            os.remove(folder_path)
         
         os.remove(path)            
                     
