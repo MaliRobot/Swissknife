@@ -483,7 +483,6 @@ def fetch(path):
     fullpath = path  + "\\input"
         
     unpack_and_backup(path)
-    return 0
 
     list_file = open('new_missions_list.csv', 'wb')
     writer = csv.writer(list_file)
