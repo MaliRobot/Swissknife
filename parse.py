@@ -371,9 +371,8 @@ class Mission:
              name = re.sub(r'\[[^)]*\]', '', name)
              self.mission_name = name
          # this check is to get rid of repetition of player count and mission type
-         print 'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW', self.mission_name
          self.mission_name = re.sub(r'co\d\dsp_', '', self.mission_name)
-         print 'QQQQQQQQQQQQQQQQQQQQQQQQQQQq', self.mission_name
+         self.mission_name = re.sub(r'spcoop_\d\d', '', self.mission_name)
          self.mission_name = re.sub(r'[_]{0,1}c[oop\W]{0,4}[_][0-9]{1,2}[_][0-9]{0,2}', '', self.mission_name)
          self.mission_name = re.sub(r'[_]{0,1}c[oop\W]{0,4}[_]{0,1}[0-9]{1,4}[_]', '', self.mission_name)
          self.mission_name = re.sub(r'[_]{0,1}c[oop\W]{2,4}[0-9]{1,4}[_]{0,1}', '', self.mission_name)
