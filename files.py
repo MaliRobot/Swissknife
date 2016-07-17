@@ -62,7 +62,7 @@ def unpack_and_backup(path):
             output = [x for x in p.stdout.readlines()][-1]
             if 'mission.cpp' in output:
                 move(os.getcwd() + '\\mission.cpp', path)
-                os.remove(sqm_path)    
+#                os.remove(sqm_path)    
         except IndexError:
             print "unable to debinarize mission.sqm file of " + str(f) + 'mission'
         
