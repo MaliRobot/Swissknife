@@ -140,7 +140,9 @@ class Mission:
          
     def examine_cpp(self):
          """
-         """    
+         """   
+         print 'processing debinarized mission file'         
+         
          if self.cpp_file == {}:
             return None
 
@@ -149,6 +151,8 @@ class Mission:
         
          infile = open(self.cpp_file.keys()[0], 'r')
          outfile = open(new_sqm, 'w')       
+         
+         data = infile.read()
      
          addons = re.findall('addons\[\] = {(.*?)};', data)[0]
          addons = addons.split(', ')
@@ -163,7 +167,9 @@ class Mission:
          spectators = data.count('VirtualSpectator')
          self.player_count = players - spectators
          
-         print(players, addons_on, island)     
+         print 'players: ', players, 'spectators: ', spectators
+         print 'addons: ', self.addons_on
+         print 'island: ', self.island     
          
          outfile.write(data)
              
@@ -365,6 +371,9 @@ class Mission:
              name = re.sub(r'\[[^)]*\]', '', name)
              self.mission_name = name
          # this check is to get rid of repetition of player count and mission type
+         print 'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW', self.mission_name
+         self.mission_name = re.sub(r'co\d\dsp_', '', self.mission_name)
+         print 'QQQQQQQQQQQQQQQQQQQQQQQQQQQq', self.mission_name
          self.mission_name = re.sub(r'[_]{0,1}c[oop\W]{0,4}[_][0-9]{1,2}[_][0-9]{0,2}', '', self.mission_name)
          self.mission_name = re.sub(r'[_]{0,1}c[oop\W]{0,4}[_]{0,1}[0-9]{1,4}[_]', '', self.mission_name)
          self.mission_name = re.sub(r'[_]{0,1}c[oop\W]{2,4}[0-9]{1,4}[_]{0,1}', '', self.mission_name)
