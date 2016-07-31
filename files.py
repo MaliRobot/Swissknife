@@ -26,6 +26,7 @@ def unpack_and_backup(basepath):
     Copy mission files to backup folder. Unpacks mission files inside 
     input folder. Tries to debinarize mission.sqm in unpacked mission file/folder.
     '''   
+    binary = False
     input_path = basepath + "\\input"
     backup_path = basepath + "\\_backup_"
     output = basepath + "\\output"
@@ -61,6 +62,7 @@ def unpack_and_backup(basepath):
         try:
             output = [x for x in p.stdout.readlines()][-1]
             if 'mission.cpp' in output:
+                binary = True
                 move(basepath + "\\" + 'mission.cpp', folder_path)  
                 os.remove(sqm_path)
             else:
@@ -68,7 +70,11 @@ def unpack_and_backup(basepath):
         except IndexError:
             print "unable to debinarize mission.sqm file of " + str(f) + ' mission'
         
-        os.remove(path)            
+        try:
+            os.remove(path)
+        except WindowsError:
+            pass 
+    return binary           
                     
 # debugging       
 #unpack_and_backup(path)

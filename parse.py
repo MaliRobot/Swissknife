@@ -34,7 +34,7 @@ ISLANDS = ['chernarus', 'utes', 'zargabad', 'takistan', 'bystrica',
          'praa_av', 'fdf_isle1_a', 'provinggrounds_pmc', 'staszow', 'panovo', 
          'colleville', 'baranow', 'ivachev', 'sara', 'saralite', 'sara_dbe1', 
          'afghanistan', 'kunduz', 'isla_duala', 'abramia', 'aliabad',
-         'panthera', 'vt5', 'vr', 'altis', 'stratis', 'woodland_acr'] 
+         'panthera', 'vt5', 'vr', 'altis', 'stratis', 'woodland_acr', 'tanoa'] 
             
 GAME_TYPES = ['coop','dm','tdm','ctf','sc','cti','rpg','seize','defend',
               'zdm','zctf','zcoop','zsc','zcti','ztdm','zrpg','zgm','zvz','zvp', 'sp']
@@ -95,7 +95,7 @@ class Mission:
              # erasing briefing name
              if re.findall(r'briefingName=\"(.+?)\"', line) != []:
                  print 'briefing name erased in .sqm!'
-                 line = re.sub(r'briefingName=\"(.+?)\"', 'briefingName=""', line)
+                 line = re.sub(r'briefingName=\"(.+?)\"', 'briefingName=""', line, re.I)
                 
              # counting number of players
              elif 'player="' in line.strip() or 'isplayable=1' in line.strip():
@@ -145,20 +145,20 @@ class Mission:
          
          if self.cpp_file == {}:
             return None
-
+        
          new_sqm = 'new_sqm.sqm'
-#         self.player_count = 0
         
          infile = open(self.cpp_file.keys()[0], 'r')
          outfile = open(new_sqm, 'w')       
          
          data = infile.read()
+         data = re.sub(r'\t\tbriefingName.*?;\n', '', data, re.I)
      
          addons = re.findall('addons\[\] = {(.*?)};', data)[0]
          addons = addons.split(', ')
          addons = [x.strip('"') for x in addons]
          for addon in addons:
-             if addon.startswith('A3_') == False:
+             if addon.lower().startswith('a3_') == False:
                  self.addons_on = True
              if addon in ISLANDS_DICT.keys():
                  self.island = ISLANDS_DICT[addon]
@@ -172,7 +172,7 @@ class Mission:
          print 'island: ', self.island     
          
          outfile.write(data)
-             
+         print (outfile)
          infile.close()
          outfile.close()
 
@@ -405,14 +405,18 @@ class Mission:
          folder_name = folder_name.rstrip('_').replace('__','_')
          return folder_name
          
-    def copy_and_replace(self, original_file, edit, cpp = False): 
-        """ rename files in mission folder, erase originals, move copies """   
-        os.remove(original_file)
-        if cpp:
+    def copy_and_replace(self, original_file, edit): 
+        """ rename files in mission folder, erase originals, move copies """ 
+#        try:
+        os.remove(original_file)          
+            
+        if original_file.endswith('cpp'):
             shutil.copy(edit, original_file[:-3] + 'sqm')
         else:
             shutil.copy(edit, original_file)
-        os.remove(edit)  
+
+#        except Exception as e:
+#            print 'ERROR ', e
      
     def modify_folders(self, original_name, folder_name):
         """ rename folder, warn if duplicate """  
@@ -478,7 +482,8 @@ def arma_island_name_lookup(island):
                          'kunduz' : 'Kunduz',
                          'isla_duala' : 'Isla Duala',
                          'panthera' : 'Panthera',
-                         'vt5' : 'VT5'}
+                         'vt5' : 'VT5',
+                         'tanoa' : 'Tanoa'}
     
     if island in island_collection:
         return island_collection[island]
@@ -490,7 +495,7 @@ def fetch(path):
     
     fullpath = path  + "\\input"
         
-    unpack_and_backup(path)
+    binary = unpack_and_backup(path)
 
     list_file = open('new_missions_list.csv', 'wb')
     writer = csv.writer(list_file)
@@ -503,8 +508,12 @@ def fetch(path):
         original_folder_name = os.path.basename(os.path.normpath(mis))
 
         # start processing
-        sqm = mission.examine_sqm()
-        cpp = mission.examine_cpp()
+        if binary == False:
+            sqm = mission.examine_sqm()
+            cpp = None
+        else:
+            sqm = None
+            cpp = mission.examine_cpp()
         ext = mission.examine_ext()
         btc = mission.examine_btc()
         far = mission.examine_far()
@@ -519,7 +528,7 @@ def fetch(path):
             mission.copy_and_replace(mis + '\\mission.sqm', sqm[1])
         
         if cpp:
-            mission.copy_and_replace(mis + '\\mission.cpp', cpp[1], cpp = True)        
+            mission.copy_and_replace(mis + '\\mission.cpp', cpp[1])        
         
         if ext:
             mission.copy_and_replace(mis + '\\description.ext', ext[1])
