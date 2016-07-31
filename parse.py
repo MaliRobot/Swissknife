@@ -34,7 +34,7 @@ ISLANDS = ['chernarus', 'utes', 'zargabad', 'takistan', 'bystrica',
          'praa_av', 'fdf_isle1_a', 'provinggrounds_pmc', 'staszow', 'panovo', 
          'colleville', 'baranow', 'ivachev', 'sara', 'saralite', 'sara_dbe1', 
          'afghanistan', 'kunduz', 'isla_duala', 'abramia', 'aliabad',
-         'panthera', 'vt5', 'vr', 'altis', 'stratis', 'woodland_acr'] 
+         'panthera', 'vt5', 'vr', 'altis', 'stratis', 'woodland_acr', 'tanoa'] 
             
 GAME_TYPES = ['coop','dm','tdm','ctf','sc','cti','rpg','seize','defend',
               'zdm','zctf','zcoop','zsc','zcti','ztdm','zrpg','zgm','zvz','zvp', 'sp']
@@ -77,10 +77,10 @@ class Mission:
          """ Search through sqm file to look for number of players, find out if 
          mission uses addons, erase briefing info parameter and get mission 
          description if it's there """
-        
+         
          if self.sqm_file == {}:
              return None
-
+         
          watch_for_addons = False
          new_sqm = 'new_sqm.sqm'
          
@@ -89,13 +89,13 @@ class Mission:
          
          infile = open(self.sqm_file.keys()[0], 'r')
          outfile = open(new_sqm, 'w')
-         
+
          for line in infile:
              line = line.lower()
              # erasing briefing name
              if re.findall(r'briefingName=\"(.+?)\"', line) != []:
                  print 'briefing name erased in .sqm!'
-                 line = re.sub(r'briefingName=\"(.+?)\"', 'briefingName=""', line)
+                 line = re.sub(r'briefingName=\"(.+?)\"', 'briefingName=""', line, re.I)
                 
              # counting number of players
              elif 'player="' in line.strip() or 'isplayable=1' in line.strip():
@@ -140,36 +140,39 @@ class Mission:
          
     def examine_cpp(self):
          """
-         """      
+         """   
+         print 'processing debinarized mission file'         
+         
          if self.cpp_file == {}:
             return None
-            
+        
          new_sqm = 'new_sqm.sqm'
-#         self.player_count = 0
         
          infile = open(self.cpp_file.keys()[0], 'r')
-         outfile = open(new_sqm, 'w')
-
-         look_players = False         
+         outfile = open(new_sqm, 'w')       
          
-         for line in infile:
-             if 'isPlayable = 1;' in line:
-                 look_players = True
-             if look_players == True and 'spectator' in line.lower():
-                 look_players = False
-             if 'class' in line and look_players == True: 
-                 self.player_count += 1
-                 look_players = False
-             if line.startswith('addons[]'):
-                 addons = re.findall('{(.*?)}', line)
-
-                 for addon in addons:
-                     if addon in ISLANDS_DICT.keys():
-                         self.island = ISLANDS_DICT[addon]
-                     elif not addon.lower().startswith('a3_'):
-                         self.addons_on = True
-             outfile.write(line)
-             
+         data = infile.read()
+         data = re.sub(r'\t\tbriefingName.*?;\n', '', data, re.I)
+     
+         addons = re.findall('addons\[\] = {(.*?)};', data)[0]
+         addons = addons.split(', ')
+         addons = [x.strip('"') for x in addons]
+         for addon in addons:
+             if addon.lower().startswith('a3_') == False:
+                 self.addons_on = True
+             if addon in ISLANDS_DICT.keys():
+                 self.island = ISLANDS_DICT[addon]
+                 
+         players = data.count("isPlayable = 1;")
+         spectators = data.count('VirtualSpectator')
+         self.player_count = players - spectators
+         
+         print 'players: ', players, 'spectators: ', spectators
+         print 'addons: ', self.addons_on
+         print 'island: ', self.island     
+         
+         outfile.write(data)
+         print (outfile)
          infile.close()
          outfile.close()
 
@@ -236,6 +239,8 @@ class Mission:
                         if game in line.lower():
                             self.game_type = game
                             print 'game type is: ', game
+                            if game.lower() == 'coop':
+                                break
                 
                 # checking mission makers name
                 elif "author =" in line.lower() or "author=" in line.lower():
@@ -366,6 +371,8 @@ class Mission:
              name = re.sub(r'\[[^)]*\]', '', name)
              self.mission_name = name
          # this check is to get rid of repetition of player count and mission type
+         self.mission_name = re.sub(r'co\d\dsp_', '', self.mission_name)
+         self.mission_name = re.sub(r'spcoop_\d\d', '', self.mission_name)
          self.mission_name = re.sub(r'[_]{0,1}c[oop\W]{0,4}[_][0-9]{1,2}[_][0-9]{0,2}', '', self.mission_name)
          self.mission_name = re.sub(r'[_]{0,1}c[oop\W]{0,4}[_]{0,1}[0-9]{1,4}[_]', '', self.mission_name)
          self.mission_name = re.sub(r'[_]{0,1}c[oop\W]{2,4}[0-9]{1,4}[_]{0,1}', '', self.mission_name)
@@ -398,14 +405,18 @@ class Mission:
          folder_name = folder_name.rstrip('_').replace('__','_')
          return folder_name
          
-    def copy_and_replace(self, original_file, edit, cpp = False): 
-        """ rename files in mission folder, erase originals, move copies """   
-        os.remove(original_file)
-        if cpp:
-            shutil.copy(edit, original_file[:-3] + '.sqm')
+    def copy_and_replace(self, original_file, edit): 
+        """ rename files in mission folder, erase originals, move copies """ 
+#        try:
+        os.remove(original_file)          
+            
+        if original_file.endswith('cpp'):
+            shutil.copy(edit, original_file[:-3] + 'sqm')
         else:
             shutil.copy(edit, original_file)
-        os.remove(edit)  
+
+#        except Exception as e:
+#            print 'ERROR ', e
      
     def modify_folders(self, original_name, folder_name):
         """ rename folder, warn if duplicate """  
@@ -471,7 +482,8 @@ def arma_island_name_lookup(island):
                          'kunduz' : 'Kunduz',
                          'isla_duala' : 'Isla Duala',
                          'panthera' : 'Panthera',
-                         'vt5' : 'VT5'}
+                         'vt5' : 'VT5',
+                         'tanoa' : 'Tanoa'}
     
     if island in island_collection:
         return island_collection[island]
@@ -483,21 +495,25 @@ def fetch(path):
     
     fullpath = path  + "\\input"
         
-    unpack_and_backup(path)
+    binary = unpack_and_backup(path)
 
     list_file = open('new_missions_list.csv', 'wb')
     writer = csv.writer(list_file)
     
     start = find_folders(path + '\\' + 'input')
-
+    
     for mis in start:
         
         mission = Mission(mis)
         original_folder_name = os.path.basename(os.path.normpath(mis))
 
         # start processing
-        sqm = mission.examine_sqm()
-        cpp = mission.examine_cpp()
+        if binary == False:
+            sqm = mission.examine_sqm()
+            cpp = None
+        else:
+            sqm = None
+            cpp = mission.examine_cpp()
         ext = mission.examine_ext()
         btc = mission.examine_btc()
         far = mission.examine_far()
@@ -512,7 +528,7 @@ def fetch(path):
             mission.copy_and_replace(mis + '\\mission.sqm', sqm[1])
         
         if cpp:
-            mission.copy_and_replace(mis + '\\mission.cpp', cpp[1], cpp = True)        
+            mission.copy_and_replace(mis + '\\mission.cpp', cpp[1])        
         
         if ext:
             mission.copy_and_replace(mis + '\\description.ext', ext[1])
