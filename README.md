@@ -59,9 +59,3 @@ It will create CSV file ready to be integrated in CiA mission spreadsheet. If it
 #####Latest version link:
 https://www.dropbox.com/s/scdalr9us17ragb/swissknife.7z?dl=0
 
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> binaries
